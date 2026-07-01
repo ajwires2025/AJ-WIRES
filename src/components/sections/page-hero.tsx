@@ -1,5 +1,6 @@
 import { ChainLinkPattern } from "@/components/visuals/wire-pattern";
 import { Reveal } from "@/components/motion/reveal";
+import { Parallax } from "@/components/motion/parallax";
 
 export function PageHero({
   eyebrow,
@@ -13,7 +14,9 @@ export function PageHero({
   return (
     <section className="relative overflow-hidden bg-navy pt-32 pb-16 lg:pt-40 lg:pb-20">
       <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy to-navy-light" />
-      <ChainLinkPattern className="pointer-events-none absolute inset-0 size-full text-white/[0.07]" />
+      <Parallax speed={0.5} className="pointer-events-none absolute inset-0 size-full">
+        <ChainLinkPattern className="size-full text-white/[0.07]" />
+      </Parallax>
       <div className="container-px relative mx-auto max-w-7xl">
         <Reveal>
           <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold-light">

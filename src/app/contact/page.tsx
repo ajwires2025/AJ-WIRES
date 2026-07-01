@@ -4,12 +4,14 @@ import { PageHero } from "@/components/sections/page-hero";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Reveal } from "@/components/motion/reveal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { company } from "@/lib/site-data";
 
 export const metadata: Metadata = {
-  title: "Contact Us",
+  title: "Contact Us — Medchal, Hyderabad",
   description:
-    "Contact A.J. Wires in Medchal, Hyderabad — Godown at IDA Cherlapally and Office at Neredmet. Call, WhatsApp, or visit us for galvanized wire and steel supply.",
+    "Contact A.J. Wires in Medchal, Hyderabad — Godown at IDA Cherlapally and Office at Neredmet. Call, WhatsApp, or visit us for galvanized wire supply.",
   alternates: { canonical: "/contact" },
 };
 
@@ -20,6 +22,12 @@ function mapEmbedUrl(query: string) {
 export default function ContactPage() {
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Contact", path: "/contact" },
+        ])}
+      />
       <PageHero
         eyebrow="Contact Us"
         title="Visit, Call, or Write to Us"

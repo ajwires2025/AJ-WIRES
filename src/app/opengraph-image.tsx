@@ -40,7 +40,7 @@ export default async function OpengraphImage() {
           {company.tagline}
         </div>
         <div style={{ display: "flex", fontSize: 26, color: "#f59e0b", marginTop: 28 }}>
-          Galvanized Barbed Wire · Chain Link Fencing · GI Wire · Steel
+          Galvanized Barbed Wire · Chain Link Fencing · GI Wire
         </div>
         <div style={{ display: "flex", fontSize: 22, color: "rgba(255,255,255,0.6)", marginTop: 12 }}>
           Medchal, Hyderabad, Telangana, India

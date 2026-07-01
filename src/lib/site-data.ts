@@ -2,7 +2,7 @@ export const company = {
   name: "A.J. Wires",
   tagline: "Galvanized Strength. Made to Spec. Built to Hold.",
   description:
-    "A.J. Wires is a Medchal, Hyderabad based manufacturer and trader of galvanized barbed wire, chain link fencing, GI wire, and steel products for agriculture, industrial, infrastructure, security, and project applications across India.",
+    "A.J. Wires is a Medchal, Hyderabad based manufacturer and trader of galvanized barbed wire, chain link fencing, and GI wire products for agriculture, industrial, infrastructure, security, and project applications across India.",
   gstin: "36CSBPJ0791A1Z5",
   phones: ["+91 99499 93568", "+91 83283 45304"],
   phonesRaw: ["+919949993568", "+918328345304"],
@@ -26,7 +26,7 @@ export const company = {
       "Malkajgiri District, Telangana",
     ],
   },
-  url: "https://ajwires.in",
+  url: "https://ajwires.com",
 };
 
 export const navLinks = [
@@ -51,11 +51,12 @@ export type Product = {
   slug: string;
   name: string;
   tagline: string;
-  icon: "barbed" | "chainlink" | "gi" | "steel";
+  icon: "barbed" | "chainlink" | "gi";
   image: string;
   specs: { label: string; values: string[] }[];
   applications: string[];
   description: string;
+  sizeGallery?: { label: string; image: string }[];
 };
 
 export const products: Product[] = [
@@ -64,59 +65,79 @@ export const products: Product[] = [
     name: "Galvanized Barbed Wire",
     tagline: "Double-strand protection, hot dip galvanized",
     icon: "barbed",
-    image: "/images/product-barbed-wire.jpg",
+    image: "/images/AJ-Wires-Double-Strand-Barbed-Wire.png",
     description:
-      "Manufactured from high-tensile GI wire with consistent barb spacing for dependable perimeter security and farm boundary protection.",
+      "Manufactured from high-tensile GI wire with consistent barb spacing for dependable perimeter security and farm boundary protection. Available in single and double-strand construction across a full range of gauges and barb spacings to match your specification.",
     specs: [
-      { label: "Construction", values: ["Double-strand GI"] },
-      { label: "Wire Gauge", values: ["12 SWG", "14 SWG"] },
-      { label: "Barb Spacing", values: ["3 inch", "4 inch", "6 inch"] },
-      { label: "Finish", values: ["Hot Dip Galvanized"] },
+      { label: "Construction", values: ["Single-strand GI", "Double-strand GI"] },
+      { label: "Line Wire Gauge", values: ["8 SWG", "10 SWG", "12 SWG", "12.5 SWG", "14 SWG", "16 SWG"] },
+      { label: "Barb Wire Gauge", values: ["14 SWG", "16 SWG", "18 SWG"] },
+      { label: "Barb Spacing", values: ["2 inch", "3 inch", "4 inch", "5 inch", "6 inch"] },
+      { label: "Roll Length", values: ["200 m", "250 m", "400 m", "500 m", "Custom length"] },
+      { label: "Coil Weight", values: ["25 kg", "45 kg", "50 kg", "Custom weight"] },
+      { label: "Finish", values: ["Hot Dip Galvanized", "Electro Galvanized"] },
     ],
     applications: ["Farm fencing", "Security fencing", "Boundary protection"],
+    sizeGallery: [
+      { label: "12 SWG", image: "/images/AJ-Wires-Galvanized-Barbed-Wire-12G.png" },
+      { label: "14 SWG", image: "/images/AJ-Wires-Double-Strand-Barbed-Wire-14G.png" },
+      { label: "14 SWG — Detail", image: "/images/AJ-Wires-Galvanized-Barbed-Wire-14G.png" },
+      { label: "16 SWG", image: "/images/AJ-Wires-Double-Strand-Barbed-Wire-16G.png" },
+      { label: "16 SWG — Detail", image: "/images/AJ-Wires-Galvanized-Barbed-Wire-16G.png" },
+    ],
   },
   {
     slug: "chain-link-fencing",
     name: "Chain Link Fencing",
     tagline: "Woven steel mesh for industrial-grade enclosures",
     icon: "chainlink",
-    image: "/images/product-chain-link.jpg",
+    image: "/images/AJ-Wires-Galvanized-Chain-Link-Fence-Panel.png",
     description:
-      "Precision-woven chain link mesh available in multiple gauges and finishes, built for long-term outdoor exposure and high-traffic perimeters.",
+      "Precision-woven chain link mesh available in multiple mesh sizes, gauges, heights, and finishes, built for long-term outdoor exposure and high-traffic perimeters.",
     specs: [
-      { label: "Mesh Size", values: ["50 mm", "60 mm", "75 mm"] },
-      { label: "Wire Gauge", values: ["8 SWG – 12 SWG"] },
-      { label: "Finish", values: ["GI", "PVC Coated"] },
+      { label: "Mesh Size", values: ["25 mm", "30 mm", "40 mm", "50 mm", "60 mm", "65 mm", "75 mm", "100 mm"] },
+      { label: "Wire Gauge", values: ["6 SWG", "8 SWG", "9 SWG", "10 SWG", "11 SWG", "12 SWG", "13 SWG", "14 SWG"] },
+      { label: "Roll Height", values: ["3 ft", "4 ft", "5 ft", "6 ft", "8 ft", "10 ft", "12 ft"] },
+      { label: "Roll Length", values: ["10 m", "20 m", "30 m", "Custom length"] },
+      { label: "Finish", values: ["GI", "PVC Coated", "Galvanized + PVC Coated"] },
+      { label: "PVC Colour", values: ["Green", "Black", "Dark Green"] },
     ],
     applications: ["Industrial fencing", "Sports grounds", "Perimeters", "Solar projects"],
+    sizeGallery: [
+      { label: "50mm Mesh · 2.5mm", image: "/images/AJ-Wires-Galv-Chain-Link-50mm-Installed.png" },
+      { label: "60mm Mesh · 3.0mm", image: "/images/AJ-Wires-Galv-Chain-Link-60mm-3-0mm.png" },
+      { label: "60mm Mesh · 3.5mm — Installed", image: "/images/AJ-Wires-Galv-Chain-Link-60mm-3-5mm.png" },
+      { label: "Fabric Roll · 3.0mm — Installed", image: "/images/AJ-Wires-Galv-Chain-Link-Fabric-Roll.png" },
+      { label: "PVC Green · 1.8mm", image: "/images/AJ-Wires-PVC-Chain-Link-Green-1-8mm.png" },
+      { label: "PVC Green · 2.0mm", image: "/images/AJ-Wires-PVC-Chain-Link-Green-2-0mm.png" },
+      { label: "PVC Green · 2.5mm", image: "/images/AJ-Wires-PVC-Chain-Link-Green-2-5mm.png" },
+      { label: "PVC Green · 3.0mm", image: "/images/AJ-Wires-PVC-Chain-Link-Green-3-0mm.png" },
+    ],
   },
   {
     slug: "gi-wire",
     name: "GI Wire",
     tagline: "Hot dip galvanized wire for every application",
     icon: "gi",
-    image: "/images/product-gi-wire.jpg",
+    image: "/images/AJ-Wires-Galvanized-Iron-Binding-Wire.png",
     description:
-      "General-purpose galvanized iron wire engineered for corrosion resistance and tensile strength across binding, fabrication, and agricultural uses.",
+      "General-purpose galvanized iron wire engineered for corrosion resistance and tensile strength across binding, fabrication, and agricultural uses. Supplied across a full gauge range and in soft, medium, or hard temper to suit the application.",
     specs: [
-      { label: "Wire Gauge", values: ["8 SWG – 18 SWG"] },
-      { label: "Finish", values: ["Hot Dip Galvanized"] },
+      { label: "Wire Gauge", values: ["6 SWG", "8 SWG", "10 SWG", "12 SWG", "14 SWG", "16 SWG", "18 SWG", "20 SWG", "22 SWG"] },
+      { label: "Temper", values: ["Soft", "Medium", "Hard"] },
+      { label: "Coil Weight", values: ["5 kg", "10 kg", "25 kg", "50 kg", "Custom weight"] },
+      { label: "Finish", values: ["Hot Dip Galvanized", "Electro Galvanized"] },
     ],
     applications: ["Binding", "Fencing", "Fabrication", "Agriculture"],
-  },
-  {
-    slug: "steel",
-    name: "Steel",
-    tagline: "Bulk steel supply for projects of any scale",
-    icon: "steel",
-    image: "/images/product-steel.jpg",
-    description:
-      "Reliable bulk steel sourcing and distribution backed by consistent quality checks, suited for construction and large fabrication projects.",
-    specs: [
-      { label: "Supply Type", values: ["Bulk & Project Supply"] },
-      { label: "Sourcing", values: ["Trading & Distribution"] },
+    sizeGallery: [
+      { label: "8 SWG — Hot Dip", image: "/images/AJ-Wires-Hot-Dipped-Galvanized-Wire-8SWG.png" },
+      { label: "10 SWG — Hot Dip", image: "/images/AJ-Wires-Hot-Dipped-Galvanized-Wire-10SWG.png" },
+      { label: "12 SWG", image: "/images/AJ-Wires-Galvanized-Iron-Wire-12SWG.png" },
+      { label: "14 SWG", image: "/images/AJ-Wires-Galvanized-Iron-Wire-14SWG.png" },
+      { label: "18 SWG — Binding Wire", image: "/images/AJ-Wires-GI-Binding-Wire-18SWG.png" },
+      { label: "20 SWG — Binding Wire", image: "/images/AJ-Wires-GI-Binding-Wire-20SWG.png" },
+      { label: "22 SWG — Binding Wire", image: "/images/AJ-Wires-GI-Binding-Wire-22SWG.png" },
     ],
-    applications: ["Construction", "Fabrication", "Industrial projects"],
   },
 ];
 
@@ -127,11 +148,7 @@ export const values = [
   },
   {
     title: "Trading",
-    description: "Sourcing and supplying steel and wire products at competitive scale.",
-  },
-  {
-    title: "Steel Distribution",
-    description: "Bulk steel distribution backed by dependable logistics.",
+    description: "Sourcing and supplying wire products at competitive scale.",
   },
   {
     title: "Project Supply",
@@ -140,7 +157,7 @@ export const values = [
 ];
 
 export const timeline = [
-  { year: "Foundation", title: "A.J. Wires Established", description: "Started operations in Medchal, Hyderabad as a wire and steel trading outfit." },
+  { year: "Foundation", title: "A.J. Wires Established", description: "Started operations in Medchal, Hyderabad as a wire trading outfit." },
   { year: "Growth", title: "Manufacturing Expansion", description: "Added in-house galvanizing and barbed wire production capability." },
   { year: "Scale", title: "Dual Unit Operations", description: "Expanded to two units in Medchal — godown and office — to serve growing demand." },
   { year: "Today", title: "Regional Trusted Supplier", description: "Serving agriculture, infrastructure, security, and industrial clients across Telangana and India." },
@@ -150,7 +167,7 @@ export const visionMission = [
   {
     title: "Our Vision",
     description:
-      "To be Telangana's most dependable name in galvanized wire and steel — recognized for consistency, capacity, and integrity in every dispatch.",
+      "To be Telangana's most dependable name in galvanized wire and fencing — recognized for consistency, capacity, and integrity in every dispatch.",
   },
   {
     title: "Our Mission",
@@ -227,22 +244,58 @@ export type GalleryItem = {
 export const galleryItems: GalleryItem[] = [
   { id: "g1", category: "Factory", title: "Wire Drawing Line", image: "/images/infra-wire-drawing.jpg" },
   { id: "g2", category: "Factory", title: "Galvanizing Bath", image: "/images/infra-galvanizing.jpg" },
-  { id: "g3", category: "GI Wire", title: "GI Wire Coils", image: "/images/gallery-gi-wire-1.jpg" },
-  { id: "g4", category: "Barbed Wire", title: "Barbed Wire Spools", image: "/images/gallery-barbed-wire-1.jpg" },
-  { id: "g5", category: "Chain Link", title: "Chain Link Rolls", image: "/images/gallery-chain-link-1.jpg" },
-  { id: "g6", category: "Products", title: "Finished Product Range", image: "/images/gallery-products-1.jpg" },
+  { id: "g3", category: "GI Wire", title: "GI Binding Wire Coils", image: "/images/AJ-Wires-Galvanized-Iron-Binding-Wire.png" },
+  { id: "g4", category: "Barbed Wire", title: "Double Strand Barbed Wire", image: "/images/AJ-Wires-Double-Strand-Barbed-Wire.png" },
+  { id: "g5", category: "Chain Link", title: "Chain Link Rolls", image: "/images/AJ-Wires-Galvanized-Chain-Link-Fence-Panel.png" },
+  { id: "g6", category: "Products", title: "Welded Wire Mesh · 1\" x 1\" · 14 Gauge", image: "/images/AJ-Wires-Welded-Mesh-1x1-14G.png" },
   { id: "g7", category: "Packing", title: "Bundle Packing", image: "/images/gallery-packing-1.jpg" },
   { id: "g8", category: "Dispatch", title: "Loading for Dispatch", image: "/images/gallery-dispatch-1.jpg" },
-  { id: "g9", category: "Projects", title: "Site Installation", image: "/images/gallery-projects-1.jpg" },
+  { id: "g9", category: "Projects", title: "Site Installation", image: "/images/AJ-Wires-Galvanized-Chain-Link-Fencing.png" },
   { id: "g10", category: "Factory", title: "Manufacturing Floor", image: "/images/gallery-factory-1.jpg" },
-  { id: "g11", category: "Chain Link", title: "PVC Coated Mesh", image: "/images/gallery-chain-link-2.jpg" },
-  { id: "g12", category: "Projects", title: "Solar Farm Perimeter", image: "/images/gallery-projects-1.jpg" },
+  { id: "g11", category: "Chain Link", title: "PVC Coated Mesh", image: "/images/AJ-Wires-Green-PVC-Chain-Link-Fence.png" },
+  { id: "g12", category: "Projects", title: "Fence Line Close-up", image: "/images/AJ-Wires-Galvanized-Chain-Link-Fence.png" },
+  { id: "g13", category: "Barbed Wire", title: "Barbed Wire Detail", image: "/images/AJ-Wires-Galvanized-Barbed-Wire.png" },
+  { id: "g14", category: "GI Wire", title: "Hot Dip Galvanized Wire", image: "/images/AJ-Wires-Hot-Dipped-Galvanized-Wire.png" },
+  { id: "g15", category: "Factory", title: "Wire Coil Storage", image: "/images/AJ-Wires-Hot-Dipped-Galvanized-Iron-Wire.png" },
+  { id: "g16", category: "Products", title: "Welded Wire Mesh · 1/2\" x 1/2\" · 16 Gauge", image: "/images/AJ-Wires-Welded-Mesh-half-16G.png" },
+  { id: "g17", category: "Products", title: "Welded Wire Mesh · 3/4\" x 3/4\" · 18 Gauge", image: "/images/AJ-Wires-Welded-Mesh-3q-18G.png" },
 ];
 
 export const productOptions = [
   "Galvanized Barbed Wire",
   "Chain Link Fencing",
   "GI Wire",
-  "Steel",
   "Other / Custom",
+];
+
+export const faqs = [
+  {
+    question: "What products does A.J. Wires manufacture and supply?",
+    answer:
+      "We manufacture and trade Galvanized Barbed Wire, Chain Link Fencing, and GI Wire — supplied to agriculture, industrial, security, and infrastructure projects across Telangana and India.",
+  },
+  {
+    question: "Is A.J. Wires' wire hot dip galvanized?",
+    answer:
+      "Yes. Our barbed wire, chain link fencing, and GI wire are hot dip galvanized in-house at our Medchal units for consistent corrosion resistance and long outdoor service life.",
+  },
+  {
+    question: "Where is A.J. Wires located?",
+    answer:
+      "We operate from Medchal, Hyderabad, Telangana — with a godown unit at IDA Cherlapally and an office at Neredmet. See our Contact page for both addresses.",
+  },
+  {
+    question: "Do you supply in bulk for projects outside Telangana?",
+    answer:
+      "Yes, we manufacture, trade, and dispatch galvanized wire products to project sites across India, not just within Telangana.",
+  },
+  {
+    question: "Is A.J. Wires GST registered?",
+    answer: `Yes, A.J. Wires is GST registered (GSTIN: ${company.gstin}) and can issue GST-compliant invoices for your orders.`,
+  },
+  {
+    question: "How do I request a quote or place a bulk order?",
+    answer:
+      "Use the Request a Quote page to share your specification, or contact us directly by phone or WhatsApp — we typically respond promptly with pricing and lead time.",
+  },
 ];

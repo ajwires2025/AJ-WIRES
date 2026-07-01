@@ -3,18 +3,44 @@ import { PageHero } from "@/components/sections/page-hero";
 import { ProductCardFull } from "@/components/sections/product-card-full";
 import { CtaBanner } from "@/components/sections/cta-banner";
 import { RevealGroup } from "@/components/motion/reveal";
-import { products } from "@/lib/site-data";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/seo";
+import { products, company } from "@/lib/site-data";
 
 export const metadata: Metadata = {
-  title: "Products | GI Wire, Barbed Wire & Chain Link Fencing",
+  title: "GI Wire, Barbed Wire & Chain Link Fencing",
   description:
-    "Galvanized Barbed Wire, Chain Link Fencing, GI Wire, and Steel — manufactured to spec with hot dip galvanizing for agriculture, industrial, security, and project applications.",
+    "Galvanized Barbed Wire, Chain Link Fencing, and GI Wire — manufactured to spec with hot dip galvanizing for agriculture, industrial, security, and project applications.",
   alternates: { canonical: "/products" },
 };
 
 export default function ProductsPage() {
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: products.map((product, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "Product",
+        name: product.name,
+        description: product.description,
+        image: `${company.url}${product.image}`,
+        url: `${company.url}/products`,
+        brand: { "@type": "Brand", name: "A.J. Wires" },
+      },
+    })),
+  };
+
   return (
     <>
+      <JsonLd data={itemListJsonLd} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Products", path: "/products" },
+        ])}
+      />
       <PageHero
         eyebrow="Our Products"
         title="Four Product Lines. One Standard of Strength."

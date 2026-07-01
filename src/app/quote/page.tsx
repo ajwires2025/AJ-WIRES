@@ -2,18 +2,26 @@ import type { Metadata } from "next";
 import { Phone, Mail, Clock } from "lucide-react";
 import { PageHero } from "@/components/sections/page-hero";
 import { QuoteForm } from "@/components/sections/quote-form";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { company } from "@/lib/site-data";
 
 export const metadata: Metadata = {
-  title: "Request a Quote",
+  title: "Get a Quote — Galvanized Wire Supply",
   description:
-    "Request a quote for galvanized barbed wire, chain link fencing, GI wire, or steel from A.J. Wires, Medchal, Hyderabad. Tell us your specification and we'll respond promptly.",
+    "Request a quote for galvanized barbed wire, chain link fencing, or GI wire from A.J. Wires, Medchal, Hyderabad. Tell us your specification and we'll respond promptly.",
   alternates: { canonical: "/quote" },
 };
 
 export default function QuotePage() {
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Request a Quote", path: "/quote" },
+        ])}
+      />
       <PageHero
         eyebrow="Request a Quote"
         title="Tell Us What You Need — We'll Take It From There"

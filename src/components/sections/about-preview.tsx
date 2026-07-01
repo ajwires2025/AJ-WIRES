@@ -14,8 +14,8 @@ export function AboutPreview() {
           <div className="relative">
             <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-navy">
               <Image
-                src="/images/about-factory.jpg"
-                alt="A.J. Wires manufacturing floor"
+                src="/images/AJ-Wires-Galvanized-Iron-Wire-14SWG.png"
+                alt="A.J. Wires GI wire coils in storage"
                 fill
                 className="object-cover"
               />
@@ -38,7 +38,7 @@ export function AboutPreview() {
           <SectionHeading
             align="left"
             eyebrow="About A.J. Wires"
-            title="A Trusted Wire & Steel Partner, Built in Telangana"
+            title="A Trusted Wire & Fencing Partner, Built in Telangana"
             description={company.description}
             className="mx-0"
           />

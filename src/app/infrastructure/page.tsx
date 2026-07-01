@@ -5,10 +5,13 @@ import { PageHero } from "@/components/sections/page-hero";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { CtaBanner } from "@/components/sections/cta-banner";
 import { RevealGroup, RevealItem } from "@/components/motion/reveal";
+import { TiltCard } from "@/components/motion/tilt-card";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { infrastructureSteps } from "@/lib/site-data";
 
 export const metadata: Metadata = {
-  title: "Infrastructure",
+  title: "Wire Drawing & Hot Dip Galvanizing Plant, Medchal",
   description:
     "From wire drawing and hot dip galvanizing to packing, storage, and dispatch — see how A.J. Wires manufactures and moves product from Medchal, Hyderabad.",
   alternates: { canonical: "/infrastructure" },
@@ -19,6 +22,12 @@ const icons = [Workflow, Droplets, Factory, PackageCheck, Warehouse, Truck];
 export default function InfrastructurePage() {
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Infrastructure", path: "/infrastructure" },
+        ])}
+      />
       <PageHero
         eyebrow="Infrastructure"
         title="From Raw Wire to Ready Dispatch"
@@ -31,7 +40,7 @@ export default function InfrastructurePage() {
             const Icon = icons[i];
             return (
               <RevealItem key={step.title}>
-                <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl">
+                <TiltCard className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow duration-300 hover:shadow-xl">
                   <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden bg-navy">
                     <Image
                       src={step.image}
@@ -53,7 +62,7 @@ export default function InfrastructurePage() {
                       {step.description}
                     </p>
                   </div>
-                </div>
+                </TiltCard>
               </RevealItem>
             );
           })}

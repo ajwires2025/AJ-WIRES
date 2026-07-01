@@ -1,22 +1,57 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useScroll, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Compass, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChainLinkPattern, BarbedWireLine } from "@/components/visuals/wire-pattern";
 
 export function Hero() {
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const ringRotateX = useSpring(useTransform(mouseY, [0, 1], [8, -8]), {
+    stiffness: 100,
+    damping: 20,
+  });
+  const ringRotateY = useSpring(useTransform(mouseX, [0, 1], [-8, 8]), {
+    stiffness: 100,
+    damping: 20,
+  });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
+  };
+
   return (
-    <section className="relative flex min-h-[92vh] items-center overflow-hidden bg-navy pt-24 lg:pt-16">
-      <Image
-        src="/images/hero-factory.jpg"
-        alt=""
-        fill
-        priority
-        className="object-cover"
-      />
+    <section
+      ref={sectionRef}
+      onMouseMove={handleMouseMove}
+      className="relative flex min-h-[92vh] items-center overflow-hidden bg-navy pt-24 lg:pt-16"
+    >
+      <motion.div className="absolute inset-0" style={{ y: bgY, scale: bgScale }}>
+        <Image
+          src="/images/hero-factory.jpg"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+        />
+      </motion.div>
       <div className="absolute inset-0 bg-gradient-to-br from-navy/95 via-navy/90 to-navy-light/85" />
       <ChainLinkPattern className="pointer-events-none absolute inset-0 size-full text-white/[0.07]" />
 
@@ -39,7 +74,10 @@ export function Hero() {
         <BarbedWireLine className="h-6 w-full" />
       </div>
 
-      <div className="container-px relative mx-auto grid max-w-7xl items-center gap-12 py-20 lg:grid-cols-[1.1fr_0.9fr]">
+      <motion.div
+        style={{ y: contentY, opacity: contentOpacity }}
+        className="container-px relative mx-auto grid max-w-7xl items-center gap-12 py-20 lg:grid-cols-[1.1fr_0.9fr]"
+      >
         <div>
           <motion.span
             initial={{ opacity: 0, y: 16 }}
@@ -74,7 +112,7 @@ export function Hero() {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg"
           >
-            Galvanized Barbed Wire, Chain Link Fencing, GI Wire &amp; Steel Solutions —
+            Galvanized Barbed Wire, Chain Link Fencing &amp; GI Wire Solutions —
             manufactured and supplied from Medchal, Hyderabad for agriculture, infrastructure,
             security, industrial, and project applications across India.
           </motion.p>
@@ -108,8 +146,12 @@ export function Hero() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="relative hidden aspect-square items-center justify-center lg:flex"
+          style={{ perspective: 1200 }}
         >
-          <div className="relative size-[26rem]">
+          <motion.div
+            style={{ rotateX: ringRotateX, rotateY: ringRotateY, transformStyle: "preserve-3d" }}
+            className="relative size-[26rem]"
+          >
             <div className="absolute inset-0 animate-spin-slow rounded-full border border-white/10" />
             <div className="absolute inset-6 rounded-full border border-dashed border-white/10" />
             <div className="absolute inset-12 rounded-full border border-white/10" />
@@ -135,9 +177,9 @@ export function Hero() {
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </section>
   );
 }

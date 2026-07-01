@@ -1,6 +1,7 @@
 import { ShieldCheck, Factory, PackageCheck, Truck } from "lucide-react";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { RevealGroup, RevealItem } from "@/components/motion/reveal";
+import { TiltCard } from "@/components/motion/tilt-card";
 import { whyChooseUs } from "@/lib/site-data";
 
 const icons = [ShieldCheck, Factory, PackageCheck, Truck];
@@ -19,7 +20,7 @@ export function WhyChooseUs() {
           const Icon = icons[i];
           return (
             <RevealItem key={item.title}>
-              <div className="h-full rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg">
+              <TiltCard className="h-full rounded-2xl border border-border bg-card p-6 transition-shadow duration-300 hover:shadow-lg">
                 <div className="flex size-12 items-center justify-center rounded-xl bg-gold/10 text-gold">
                   <Icon className="size-6" />
                 </div>
@@ -29,7 +30,7 @@ export function WhyChooseUs() {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {item.description}
                 </p>
-              </div>
+              </TiltCard>
             </RevealItem>
           );
         })}

@@ -7,12 +7,14 @@ import { Timeline } from "@/components/sections/timeline";
 import { WhyChooseUs } from "@/components/sections/why-choose-us";
 import { CtaBanner } from "@/components/sections/cta-banner";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/reveal";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { company, values, visionMission } from "@/lib/site-data";
 
 export const metadata: Metadata = {
-  title: "About Us",
+  title: "Galvanized Wire Manufacturer in Medchal, Hyderabad",
   description:
-    "A.J. Wires is a Medchal, Hyderabad based manufacturer and trader of galvanized barbed wire, chain link fencing, GI wire, and steel products — manufacturing, trading, and supplying projects across Telangana and India.",
+    "A.J. Wires is a Medchal, Hyderabad based manufacturer and trader of galvanized barbed wire, chain link fencing, and GI wire products — manufacturing, trading, and supplying projects across Telangana and India.",
   alternates: { canonical: "/about" },
 };
 
@@ -21,6 +23,12 @@ const icons = [Target, Eye];
 export default function AboutPage() {
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "About", path: "/about" },
+        ])}
+      />
       <PageHero
         eyebrow="About A.J. Wires"
         title="A Manufacturing & Trading Partner Built on Reliability"
@@ -32,7 +40,7 @@ export default function AboutPage() {
           <Reveal direction="right">
             <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-navy">
               <Image
-                src="/images/product-gi-wire.jpg"
+                src="/images/AJ-Wires-Hot-Dipped-Galvanized-Wire.png"
                 alt="Galvanized wire close-up"
                 fill
                 className="object-cover"

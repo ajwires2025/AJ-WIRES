@@ -6,6 +6,7 @@ import { ProductsPreview } from "@/components/sections/products-preview";
 import { WhyChooseUs } from "@/components/sections/why-choose-us";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { ApplicationsGrid } from "@/components/sections/applications-grid";
+import { FaqSection } from "@/components/sections/faq-section";
 import { CtaBanner } from "@/components/sections/cta-banner";
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <FaqSection />
       <CtaBanner />
     </>
   );

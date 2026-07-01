@@ -5,10 +5,13 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { QualityBar } from "@/components/sections/quality-bar";
 import { CtaBanner } from "@/components/sections/cta-banner";
 import { RevealGroup, RevealItem } from "@/components/motion/reveal";
+import { TiltCard } from "@/components/motion/tilt-card";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { qualityMetrics, qualityChecks } from "@/lib/site-data";
 
 export const metadata: Metadata = {
-  title: "Quality",
+  title: "Quality Standards for Galvanized Wire & Fencing",
   description:
     "Quality You Can Specify — hot dip galvanizing, consistent quality checks, bulk supply readiness, safe packing, and timely delivery from A.J. Wires.",
   alternates: { canonical: "/quality" },
@@ -19,6 +22,12 @@ const checkIcons = [ClipboardCheck, FlaskConical, Droplets, Ruler, PackageSearch
 export default function QualityPage() {
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Quality", path: "/quality" },
+        ])}
+      />
       <PageHero
         eyebrow="Quality"
         title="Quality You Can Specify"
@@ -55,7 +64,7 @@ export default function QualityPage() {
               const Icon = checkIcons[i];
               return (
                 <RevealItem key={check.title}>
-                  <div className="flex h-full flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6 text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg">
+                  <TiltCard className="flex h-full flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6 text-center transition-shadow duration-300 hover:shadow-lg">
                     <div className="flex size-12 items-center justify-center rounded-xl bg-navy text-gold dark:bg-gold dark:text-navy">
                       <Icon className="size-6" />
                     </div>
@@ -65,7 +74,7 @@ export default function QualityPage() {
                     <p className="text-xs leading-relaxed text-muted-foreground">
                       {check.description}
                     </p>
-                  </div>
+                  </TiltCard>
                 </RevealItem>
               );
             })}

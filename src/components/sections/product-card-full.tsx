@@ -4,7 +4,9 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RevealItem } from "@/components/motion/reveal";
+import { TiltCard } from "@/components/motion/tilt-card";
 import { ProductIcon } from "@/components/sections/product-icon";
+import { ProductSizeGallery } from "@/components/sections/product-size-gallery";
 import type { Product } from "@/lib/site-data";
 
 export function ProductCardFull({ product, reverse = false }: { product: Product; reverse?: boolean }) {
@@ -15,13 +17,15 @@ export function ProductCardFull({ product, reverse = false }: { product: Product
           reverse ? "lg:[&>*:first-child]:order-2" : ""
         }`}
       >
-        <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-navy">
-          <Image src={product.image} alt={product.name} fill className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/10 to-transparent" />
-          <div className="absolute bottom-4 left-4 flex size-12 items-center justify-center rounded-xl bg-gold text-navy">
-            <ProductIcon icon={product.icon} className="size-6" />
+        <TiltCard maxTilt={6} className="aspect-square overflow-hidden rounded-2xl bg-navy">
+          <div className="relative flex size-full items-center justify-center">
+            <Image src={product.image} alt={product.name} fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/10 to-transparent" />
+            <div className="absolute bottom-4 left-4 flex size-12 items-center justify-center rounded-xl bg-gold text-navy">
+              <ProductIcon icon={product.icon} className="size-6" />
+            </div>
           </div>
-        </div>
+        </TiltCard>
 
         <div>
           <h3 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
@@ -65,6 +69,8 @@ export function ProductCardFull({ product, reverse = false }: { product: Product
               ))}
             </div>
           </div>
+
+          {product.sizeGallery && <ProductSizeGallery items={product.sizeGallery} />}
 
           <Button asChild className="mt-7 bg-navy text-white hover:bg-navy-light dark:bg-gold dark:text-navy dark:hover:bg-gold-light">
             <Link href="/quote">

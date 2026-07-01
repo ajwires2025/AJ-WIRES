@@ -31,14 +31,13 @@ export const metadata: Metadata = {
     template: "%s | A.J. Wires",
   },
   description:
-    "A.J. Wires is a Medchal, Hyderabad based manufacturer and trader of galvanized barbed wire, chain link fencing, GI wire, and steel — supplying agriculture, infrastructure, security, and industrial projects across Telangana and India.",
+    "A.J. Wires is a Medchal, Hyderabad based manufacturer and trader of galvanized barbed wire, chain link fencing, and GI wire — supplying agriculture, infrastructure, security, and industrial projects across Telangana and India.",
   keywords: [
     "GI Wire Manufacturer Hyderabad",
     "Barbed Wire Manufacturer Hyderabad",
     "Chain Link Fence Manufacturer Hyderabad",
     "GI Wire Supplier Telangana",
     "Galvanized Wire India",
-    "Steel Supplier Hyderabad",
     "Barbed Wire Medchal",
     "Chain Link Fencing Telangana",
   ],
@@ -52,13 +51,13 @@ export const metadata: Metadata = {
     siteName: "A.J. Wires",
     title: "A.J. Wires | Galvanized Strength. Made to Spec. Built to Hold.",
     description:
-      "Manufacturer and trader of galvanized barbed wire, chain link fencing, GI wire, and steel — from Medchal, Hyderabad to projects across India.",
+      "Manufacturer and trader of galvanized barbed wire, chain link fencing, and GI wire — from Medchal, Hyderabad to projects across India.",
   },
   twitter: {
     card: "summary_large_image",
     title: "A.J. Wires | Galvanized Strength. Made to Spec. Built to Hold.",
     description:
-      "Manufacturer and trader of galvanized barbed wire, chain link fencing, GI wire, and steel from Medchal, Hyderabad.",
+      "Manufacturer and trader of galvanized barbed wire, chain link fencing, and GI wire from Medchal, Hyderabad.",
   },
   robots: { index: true, follow: true },
 };
@@ -70,13 +69,21 @@ export default function RootLayout({
 }>) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "LocalBusiness"],
     name: "A.J. Wires",
+    alternateName: "AJ Wires",
     description: company.description,
+    slogan: company.tagline,
     url: siteUrl,
     logo: `${siteUrl}/logo-mark.png`,
-    telephone: company.phones,
+    image: `${siteUrl}/logo-mark.png`,
+    telephone: company.phones[0],
     email: company.email,
+    priceRange: "₹₹",
+    areaServed: [
+      { "@type": "State", name: "Telangana" },
+      { "@type": "Country", name: "India" },
+    ],
     address: [
       {
         "@type": "PostalAddress",
@@ -98,11 +105,16 @@ export default function RootLayout({
       },
     ],
     vatID: company.gstin,
+    knowsAbout: [
+      "Galvanized Barbed Wire",
+      "Chain Link Fencing",
+      "GI Wire",
+      "Hot Dip Galvanizing",
+    ],
     makesOffer: [
       { "@type": "Offer", itemOffered: { "@type": "Product", name: "Galvanized Barbed Wire" } },
       { "@type": "Offer", itemOffered: { "@type": "Product", name: "Chain Link Fencing" } },
       { "@type": "Offer", itemOffered: { "@type": "Product", name: "GI Wire" } },
-      { "@type": "Offer", itemOffered: { "@type": "Product", name: "Steel" } },
     ],
   };
 
