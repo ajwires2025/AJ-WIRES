@@ -40,7 +40,7 @@ export default function QualityPage() {
           title="Six Commitments, Every Order"
           description="These aren't aspirations — they're checked at every stage of production and dispatch."
         />
-        <RevealGroup className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.1}>
+        <RevealGroup className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.1}>
           {qualityMetrics.map((metric) => (
             <QualityBar
               key={metric.label}
@@ -59,7 +59,7 @@ export default function QualityPage() {
             title="Checked at Every Stage of Production"
             description="From raw material to pre-dispatch inspection, every batch passes through these checkpoints."
           />
-          <RevealGroup className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-5" stagger={0.08}>
+          <RevealGroup className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5" stagger={0.08}>
             {qualityChecks.map((check, i) => {
               const Icon = checkIcons[i];
               return (

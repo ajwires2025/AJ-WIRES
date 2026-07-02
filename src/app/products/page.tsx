@@ -43,7 +43,7 @@ export default function ProductsPage() {
       />
       <PageHero
         eyebrow="Our Products"
-        title="Four Product Lines. One Standard of Strength."
+        title="Three Product Lines. One Standard of Strength."
         description="Every product is manufactured or sourced to your exact gauge, finish, and quantity — ready for agriculture, security, infrastructure, and industrial projects."
       />
 

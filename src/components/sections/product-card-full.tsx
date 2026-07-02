@@ -13,7 +13,7 @@ export function ProductCardFull({ product, reverse = false }: { product: Product
   return (
     <RevealItem direction={reverse ? "left" : "right"}>
       <div
-        className={`grid items-center gap-10 rounded-3xl border border-border bg-card p-8 transition-shadow duration-300 hover:shadow-xl lg:grid-cols-[0.85fr_1.15fr] lg:p-12 ${
+        className={`grid grid-cols-1 items-center gap-10 rounded-3xl border border-border bg-card p-8 transition-shadow duration-300 hover:shadow-xl lg:grid-cols-[0.85fr_1.15fr] lg:p-12 ${
           reverse ? "lg:[&>*:first-child]:order-2" : ""
         }`}
       >
@@ -36,7 +36,7 @@ export function ProductCardFull({ product, reverse = false }: { product: Product
             {product.description}
           </p>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {product.specs.map((spec) => (
               <div key={spec.label}>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

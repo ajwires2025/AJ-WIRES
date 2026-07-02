@@ -35,7 +35,7 @@ export default function InfrastructurePage() {
       />
 
       <section className="container-px mx-auto max-w-7xl py-20 lg:py-28">
-        <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.1}>
+        <RevealGroup className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.1}>
           {infrastructureSteps.map((step, i) => {
             const Icon = icons[i];
             return (

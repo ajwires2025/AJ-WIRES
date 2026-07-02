@@ -29,7 +29,7 @@ export default function QuotePage() {
       />
 
       <section className="container-px mx-auto max-w-5xl py-20 lg:py-28">
-        <div className="grid gap-10 lg:grid-cols-[1fr_2fr]">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_2fr]">
           <div className="space-y-6">
             <div className="rounded-2xl border border-border bg-card p-6">
               <div className="flex items-center gap-3">

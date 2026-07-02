@@ -12,7 +12,7 @@ export function ProductSizeGallery({
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Available Sizes
       </p>
-      <div className="mt-2 -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:thin]">
+      <div className="mt-2 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]">
         {items.map((item) => (
           <div
             key={item.label}

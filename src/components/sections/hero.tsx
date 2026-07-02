@@ -76,7 +76,7 @@ export function Hero() {
 
       <motion.div
         style={{ y: contentY, opacity: contentOpacity }}
-        className="container-px relative mx-auto grid max-w-7xl items-center gap-12 py-20 lg:grid-cols-[1.1fr_0.9fr]"
+        className="container-px relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 py-20 lg:grid-cols-[1.1fr_0.9fr]"
       >
         <div>
           <motion.span

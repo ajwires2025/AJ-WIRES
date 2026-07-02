@@ -15,10 +15,10 @@ export function ProductsPreview() {
         <SectionHeading
           eyebrow="What We Supply"
           title="Engineered for Strength, Built to Specification"
-          description="Four core product lines — manufactured, sourced, and packed to your exact requirement."
+          description="Core product lines — manufactured, sourced, and packed to your exact requirement."
         />
 
-        <RevealGroup className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4" stagger={0.1}>
+        <RevealGroup className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.1}>
           {products.map((product) => (
             <RevealItem key={product.slug}>
               <Link href="/products" className="block h-full">

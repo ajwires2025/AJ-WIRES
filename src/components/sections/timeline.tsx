@@ -3,7 +3,7 @@ import { timeline } from "@/lib/site-data";
 
 export function Timeline() {
   return (
-    <RevealGroup className="relative grid gap-8 sm:grid-cols-2 lg:grid-cols-4" stagger={0.12}>
+    <RevealGroup className="relative grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4" stagger={0.12}>
       <div className="absolute inset-x-0 top-6 hidden h-px bg-border lg:block" />
       {timeline.map((item, i) => (
         <RevealItem key={item.title} className="relative">

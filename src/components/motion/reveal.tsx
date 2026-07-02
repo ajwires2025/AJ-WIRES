@@ -44,7 +44,7 @@ export function Reveal({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once, amount: 0.2 }}
+      viewport={{ once, amount: "some" }}
       variants={variants}
     >
       {children}
@@ -66,7 +66,7 @@ export function RevealGroup({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: true, amount: "some" }}
       variants={{
         hidden: {},
         visible: {

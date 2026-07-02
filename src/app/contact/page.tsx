@@ -35,7 +35,7 @@ export default function ContactPage() {
       />
 
       <section className="container-px mx-auto max-w-7xl py-20 lg:py-28">
-        <div className="grid gap-14 lg:grid-cols-[1fr_1.2fr]">
+        <div className="grid grid-cols-1 gap-14 lg:grid-cols-[1fr_1.2fr]">
           <div>
             <SectionHeading
               align="left"

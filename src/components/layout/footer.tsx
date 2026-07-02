@@ -9,7 +9,7 @@ export function Footer() {
     <footer className="relative overflow-hidden bg-navy text-white">
       <ChainLinkPattern className="pointer-events-none absolute inset-0 size-full text-white/40" />
       <div className="container-px relative mx-auto max-w-7xl py-16 lg:py-20">
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
           <div>
             <Link href="/" className="flex items-center gap-2.5">
               <span className="relative flex size-10 shrink-0 items-center justify-center">

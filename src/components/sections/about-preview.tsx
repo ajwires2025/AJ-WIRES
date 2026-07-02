@@ -9,7 +9,7 @@ import { company, values } from "@/lib/site-data";
 export function AboutPreview() {
   return (
     <section className="container-px mx-auto max-w-7xl py-20 lg:py-28">
-      <div className="grid items-center gap-14 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
         <Reveal direction="right">
           <div className="relative">
             <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-navy">

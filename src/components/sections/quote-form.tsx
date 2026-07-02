@@ -130,7 +130,7 @@ export function QuoteForm() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onSubmit={handleSubmit(onSubmit)}
-            className="grid gap-6 sm:grid-cols-2"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2"
           >
             <div>
               <Label htmlFor="name">Name *</Label>
