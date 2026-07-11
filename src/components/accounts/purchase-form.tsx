@@ -194,8 +194,12 @@ export function PurchaseForm({ purchase, user }: { purchase: Purchase | null; us
       }
 
       if (billFile) {
-        const uploaded = await uploadPurchaseBillFile(purchaseId, billFile);
-        await updatePurchase(purchaseId, { ...input, billFileUrl: uploaded.url, billFileName: uploaded.name });
+        try {
+          const uploaded = await uploadPurchaseBillFile(purchaseId, billFile);
+          await updatePurchase(purchaseId, { ...input, billFileUrl: uploaded.url, billFileName: uploaded.name });
+        } catch {
+          toast.warning("Bill saved, but the file couldn't be uploaded (Storage isn't set up yet).");
+        }
       }
 
       toast.success(purchase ? "Purchase updated" : "Purchase recorded");
@@ -491,6 +495,9 @@ export function PurchaseForm({ purchase, user }: { purchase: Purchase | null; us
                 <Upload className="size-4" /> {billFile.name} (will upload on save)
               </p>
             )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              File storage isn&apos;t set up yet — the bill still saves, but the scan won&apos;t upload until Storage is enabled.
+            </p>
           </div>
           <div>
             <Label htmlFor="notes">Notes</Label>
