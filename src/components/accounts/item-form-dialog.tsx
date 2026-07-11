@@ -36,6 +36,7 @@ const itemSchema = z.object({
   defaultCostPrice: z.number().min(0),
   defaultSalePrice: z.number().min(0),
   gstRate: z.number().min(0).max(100),
+  openingStock: z.number().min(0),
   notes: z.string().optional(),
 });
 
@@ -72,6 +73,7 @@ export function ItemFormDialog({
       defaultCostPrice: 0,
       defaultSalePrice: 0,
       gstRate: 18,
+      openingStock: 0,
       notes: "",
     },
   });
@@ -88,6 +90,7 @@ export function ItemFormDialog({
             defaultCostPrice: item.defaultCostPrice,
             defaultSalePrice: item.defaultSalePrice,
             gstRate: item.gstRate,
+            openingStock: item.openingStock ?? 0,
             notes: item.notes,
           }
         : {
@@ -98,6 +101,7 @@ export function ItemFormDialog({
             defaultCostPrice: 0,
             defaultSalePrice: 0,
             gstRate: 18,
+            openingStock: 0,
             notes: "",
           }
     );
@@ -181,17 +185,23 @@ export function ItemFormDialog({
 
             <div>
               <Label htmlFor="gstRate">GST rate (%)</Label>
-              <Input id="gstRate" type="number" step="0.01" className="mt-1.5" {...register("gstRate")} />
+              <Input id="gstRate" type="number" step="0.01" className="mt-1.5" {...register("gstRate", { valueAsNumber: true })} />
             </div>
 
             <div>
               <Label htmlFor="defaultCostPrice">Default cost price (₹)</Label>
-              <Input id="defaultCostPrice" type="number" step="0.01" className="mt-1.5" {...register("defaultCostPrice")} />
+              <Input id="defaultCostPrice" type="number" step="0.01" className="mt-1.5" {...register("defaultCostPrice", { valueAsNumber: true })} />
             </div>
 
             <div>
               <Label htmlFor="defaultSalePrice">Default sale price (₹)</Label>
-              <Input id="defaultSalePrice" type="number" step="0.01" className="mt-1.5" {...register("defaultSalePrice")} />
+              <Input id="defaultSalePrice" type="number" step="0.01" className="mt-1.5" {...register("defaultSalePrice", { valueAsNumber: true })} />
+            </div>
+
+            <div>
+              <Label htmlFor="openingStock">Opening stock (qty)</Label>
+              <Input id="openingStock" type="number" step="0.001" className="mt-1.5" {...register("openingStock", { valueAsNumber: true })} />
+              {errors.openingStock && <p className="mt-1 text-xs text-destructive">{errors.openingStock.message}</p>}
             </div>
 
             <div className="sm:col-span-2">

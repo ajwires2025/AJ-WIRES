@@ -13,6 +13,7 @@ import {
   Wallet,
   TrendingUp,
   Menu,
+  Boxes,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/accounts/sales", label: "Sales", icon: Receipt },
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
   { href: "/accounts/aging", label: "Aging", icon: TrendingUp },
+  { href: "/accounts/stock-ledger", label: "Stock", icon: Boxes },
   { href: "/accounts/parties", label: "Parties", icon: Users },
   { href: "/accounts/items", label: "Items", icon: Package },
 ];
