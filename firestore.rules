@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function role() {
+      return request.auth.token.role;
+    }
+    function isAdmin() {
+      return isSignedIn() && role() == 'admin';
+    }
+    function isCA() {
+      return isSignedIn() && role() == 'ca';
+    }
+    function isStaff() {
+      return isAdmin() || isCA();
+    }
+
+    // User directory (admin/ca accounts). Only the admin manages accounts;
+    // both roles can read the directory to show names in the UI.
+    match /users/{userId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // Master data: customers/suppliers and the item catalog.
+    // Both roles can read and search; only the admin creates/edits/deletes.
+    match /parties/{partyId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    match /items/{itemId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // Everything else (purchases, sales, payments, remindersLog, ...) is
+    // added collection-by-collection in later milestones. Deny by default
+    // until each one is explicitly opened up.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
