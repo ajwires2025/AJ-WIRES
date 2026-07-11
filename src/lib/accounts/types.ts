@@ -52,6 +52,56 @@ export const UNIT_LABELS: Record<Unit, string> = {
   piece: "Piece",
 };
 
+export type PaymentStatus = "unpaid" | "partial" | "paid";
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  unpaid: "Unpaid",
+  partial: "Partially Paid",
+  paid: "Paid",
+};
+
+export type BillItemLine = {
+  itemId: string;
+  description: string;
+  hsnCode: string;
+  quantity: number;
+  unit: Unit;
+  rate: number;
+  taxableValue: number;
+  gstRate: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  lineTotal: number;
+};
+
+export type Purchase = {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  billNumber: string;
+  billDate: string;
+  dueDate: string;
+  placeOfSupplyStateCode: string;
+  items: BillItemLine[];
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  roundOff: number;
+  grandTotal: number;
+  amountPaid: number;
+  paymentStatus: PaymentStatus;
+  billFileUrl: string;
+  billFileName: string;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type PurchaseInput = Omit<Purchase, "id" | "createdBy" | "createdAt">;
+
 // Defaults to be verified with the CA — not final. HSN digit-length and exact
 // rates depend on turnover/notification and must be confirmed before filing.
 export const DEFAULT_ITEMS: ItemInput[] = [

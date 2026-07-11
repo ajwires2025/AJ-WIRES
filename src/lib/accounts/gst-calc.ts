@@ -1,0 +1,95 @@
+import { isIntraState } from "@/lib/accounts/gst-states";
+import type { BillItemLine } from "@/lib/accounts/types";
+
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+// Same-state (Telangana) -> CGST+SGST split; different state -> IGST at full
+// rate. Never combine CGST/SGST into one figure — GST returns need them split.
+export function calcLine(
+  quantity: number,
+  rate: number,
+  gstRate: number,
+  placeOfSupplyStateCode: string
+): Pick<BillItemLine, "taxableValue" | "cgst" | "sgst" | "igst" | "lineTotal"> {
+  const taxableValue = round2(quantity * rate);
+  const intraState = isIntraState(placeOfSupplyStateCode);
+
+  const cgst = intraState ? round2((taxableValue * gstRate) / 2 / 100) : 0;
+  const sgst = intraState ? round2((taxableValue * gstRate) / 2 / 100) : 0;
+  const igst = intraState ? 0 : round2((taxableValue * gstRate) / 100);
+
+  return {
+    taxableValue,
+    cgst,
+    sgst,
+    igst,
+    lineTotal: round2(taxableValue + cgst + sgst + igst),
+  };
+}
+
+export type TaxByRate = {
+  gstRate: number;
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+};
+
+export type BillTotals = {
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  roundOff: number;
+  grandTotal: number;
+  taxByRate: TaxByRate[];
+};
+
+// GST rules require showing tax broken out per rate when a bill mixes rates
+// (e.g. some lines at 18%, some at 12%) — never just one blended total.
+export function calcBillTotals(items: BillItemLine[]): BillTotals {
+  const taxableValue = round2(items.reduce((sum, i) => sum + i.taxableValue, 0));
+  const cgst = round2(items.reduce((sum, i) => sum + i.cgst, 0));
+  const sgst = round2(items.reduce((sum, i) => sum + i.sgst, 0));
+  const igst = round2(items.reduce((sum, i) => sum + i.igst, 0));
+  const totalTax = round2(cgst + sgst + igst);
+  const rawGrandTotal = taxableValue + totalTax;
+  const grandTotal = Math.round(rawGrandTotal);
+  const roundOff = round2(grandTotal - rawGrandTotal);
+
+  const byRate = new Map<number, TaxByRate>();
+  for (const item of items) {
+    const existing = byRate.get(item.gstRate) ?? {
+      gstRate: item.gstRate,
+      taxableValue: 0,
+      cgst: 0,
+      sgst: 0,
+      igst: 0,
+    };
+    existing.taxableValue = round2(existing.taxableValue + item.taxableValue);
+    existing.cgst = round2(existing.cgst + item.cgst);
+    existing.sgst = round2(existing.sgst + item.sgst);
+    existing.igst = round2(existing.igst + item.igst);
+    byRate.set(item.gstRate, existing);
+  }
+
+  return {
+    taxableValue,
+    cgst,
+    sgst,
+    igst,
+    totalTax,
+    roundOff,
+    grandTotal,
+    taxByRate: Array.from(byRate.values()).sort((a, b) => a.gstRate - b.gstRate),
+  };
+}
+
+export function derivePaymentStatus(grandTotal: number, amountPaid: number): "unpaid" | "partial" | "paid" {
+  if (amountPaid <= 0) return "unpaid";
+  if (amountPaid >= grandTotal) return "paid";
+  return "partial";
+}

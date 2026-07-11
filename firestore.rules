@@ -37,9 +37,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Everything else (purchases, sales, payments, remindersLog, ...) is
-    // added collection-by-collection in later milestones. Deny by default
-    // until each one is explicitly opened up.
+    // Purchase bills. Both roles read; only the admin creates/edits/deletes
+    // (CA review/reconciliation notes are a later addition).
+    match /purchases/{purchaseId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // Everything else (sales, payments, remindersLog, ...) is added
+    // collection-by-collection in later milestones. Deny by default until
+    // each one is explicitly opened up.
     match /{document=**} {
       allow read, write: if false;
     }

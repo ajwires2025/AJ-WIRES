@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut, ShieldCheck, Users, Package } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck, Users, Package, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import type { SessionUser } from "@/lib/firebase/session";
 
 const navItems = [
   { href: "/accounts/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/accounts/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/accounts/parties", label: "Parties", icon: Users },
   { href: "/accounts/items", label: "Items", icon: Package },
 ];
