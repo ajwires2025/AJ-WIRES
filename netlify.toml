@@ -3,3 +3,9 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[functions]
+  # firebase-admin -> jwks-rsa -> jose ships ESM-only; Netlify's own function
+  # bundler (separate from Next.js's build) breaks it with ERR_REQUIRE_ESM
+  # unless these are left external and resolved from node_modules at runtime.
+  external_node_modules = ["firebase-admin", "jwks-rsa", "jose"]
