@@ -1,11 +1,9 @@
-import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/firebase/session";
 import { PurchaseForm } from "@/components/accounts/purchase-form";
 
 export default async function NewPurchasePage() {
   const user = await getSessionUser();
   if (!user) return null;
-  if (user.role !== "admin") redirect("/accounts/purchases");
 
   return (
     <div>

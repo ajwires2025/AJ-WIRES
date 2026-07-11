@@ -8,9 +8,6 @@ service firebase.storage {
     function role() {
       return request.auth.token.role;
     }
-    function isAdmin() {
-      return isSignedIn() && role() == 'admin';
-    }
     function isStaff() {
       return isSignedIn() && (role() == 'admin' || role() == 'ca');
     }
@@ -19,16 +16,15 @@ service firebase.storage {
         && request.resource.contentType.matches('application/pdf|image/jpeg|image/jpg|image/png');
     }
 
-    // Scanned purchase/sales bills. Only the admin uploads; both roles can
-    // view/download since the CA needs to review them.
+    // Scanned purchase/sales bills. Both Admin and CA can upload and view.
     match /purchases/{purchaseId}/{fileName} {
       allow read: if isStaff();
-      allow write: if isAdmin() && isAllowedBillFile();
+      allow write: if isStaff() && isAllowedBillFile();
     }
 
     match /sales/{saleId}/{fileName} {
       allow read: if isStaff();
-      allow write: if isAdmin() && isAllowedBillFile();
+      allow write: if isStaff() && isAllowedBillFile();
     }
 
     match /{allPaths=**} {

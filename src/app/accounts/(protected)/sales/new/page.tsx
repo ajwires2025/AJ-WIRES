@@ -1,11 +1,9 @@
-import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/firebase/session";
 import { SaleForm } from "@/components/accounts/sale-form";
 
 export default async function NewSalePage() {
   const user = await getSessionUser();
   if (!user) return null;
-  if (user.role !== "admin") redirect("/accounts/sales");
 
   return (
     <div>

@@ -31,7 +31,8 @@ export function SalesClient({ user }: { user: SessionUser }) {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | PaymentStatus>("all");
 
-  const isAdmin = user.role === "admin";
+  // Both Admin and CA have full edit access.
+  const canEdit = user.role === "admin" || user.role === "ca";
 
   React.useEffect(() => {
     const unsubscribe = subscribeToSales((data) => {
@@ -63,7 +64,7 @@ export function SalesClient({ user }: { user: SessionUser }) {
             Invoices issued to customers. Outstanding: {inr.format(totalOutstanding)} · Gross profit: {inr.format(totalProfit)}
           </p>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <Button asChild className="bg-navy text-white hover:bg-navy-light dark:bg-gold dark:text-navy">
             <Link href="/accounts/sales/new">
               <Plus className="size-4" /> Add Sales Invoice

@@ -36,7 +36,8 @@ export function PartiesClient({ user }: { user: SessionUser }) {
   const [editingParty, setEditingParty] = React.useState<Party | null>(null);
   const [deletingParty, setDeletingParty] = React.useState<Party | null>(null);
 
-  const isAdmin = user.role === "admin";
+  // Both Admin and CA have full edit access.
+  const canEdit = user.role === "admin" || user.role === "ca";
 
   React.useEffect(() => {
     const unsubscribe = subscribeToParties((data) => {
@@ -76,7 +77,7 @@ export function PartiesClient({ user }: { user: SessionUser }) {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Customers and suppliers.</p>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <Button
             onClick={() => {
               setEditingParty(null);
@@ -121,7 +122,7 @@ export function PartiesClient({ user }: { user: SessionUser }) {
                 <th className="px-4 py-3 text-left">GSTIN</th>
                 <th className="px-4 py-3 text-left">Contact</th>
                 <th className="px-4 py-3 text-right">Opening balance</th>
-                {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
+                {canEdit && <th className="px-4 py-3 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -156,7 +157,7 @@ export function PartiesClient({ user }: { user: SessionUser }) {
                     <td className="px-4 py-3 text-right tabular-nums text-foreground">
                       {inr.format(party.openingBalance || 0)}
                     </td>
-                    {isAdmin && (
+                    {canEdit && (
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
                           <Button
@@ -188,7 +189,7 @@ export function PartiesClient({ user }: { user: SessionUser }) {
         </div>
       </div>
 
-      {isAdmin && (
+      {canEdit && (
         <>
           <PartyFormDialog
             open={formOpen}

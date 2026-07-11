@@ -31,7 +31,8 @@ export function ItemsClient({ user }: { user: SessionUser }) {
   const [deletingItem, setDeletingItem] = React.useState<Item | null>(null);
   const [seeding, setSeeding] = React.useState(false);
 
-  const isAdmin = user.role === "admin";
+  // Both Admin and CA have full edit access.
+  const canEdit = user.role === "admin" || user.role === "ca";
 
   React.useEffect(() => {
     const unsubscribe = subscribeToItems((data) => {
@@ -78,7 +79,7 @@ export function ItemsClient({ user }: { user: SessionUser }) {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Product catalog with HSN codes and pricing.</p>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <div className="flex gap-2">
             {items.length === 0 && !loading && (
               <Button variant="outline" onClick={handleSeedDefaults} disabled={seeding}>
@@ -139,7 +140,7 @@ export function ItemsClient({ user }: { user: SessionUser }) {
                 <th className="px-4 py-3 text-right">Cost price</th>
                 <th className="px-4 py-3 text-right">Sale price</th>
                 <th className="px-4 py-3 text-right">GST %</th>
-                {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
+                {canEdit && <th className="px-4 py-3 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -171,7 +172,7 @@ export function ItemsClient({ user }: { user: SessionUser }) {
                       {inr.format(item.defaultSalePrice || 0)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-foreground">{item.gstRate}%</td>
-                    {isAdmin && (
+                    {canEdit && (
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
                           <Button
@@ -203,7 +204,7 @@ export function ItemsClient({ user }: { user: SessionUser }) {
         </div>
       </div>
 
-      {isAdmin && (
+      {canEdit && (
         <>
           <ItemFormDialog
             open={formOpen}

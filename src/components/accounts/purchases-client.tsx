@@ -31,7 +31,8 @@ export function PurchasesClient({ user }: { user: SessionUser }) {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | PaymentStatus>("all");
 
-  const isAdmin = user.role === "admin";
+  // Both Admin and CA have full edit access.
+  const canEdit = user.role === "admin" || user.role === "ca";
 
   React.useEffect(() => {
     const unsubscribe = subscribeToPurchases((data) => {
@@ -62,7 +63,7 @@ export function PurchasesClient({ user }: { user: SessionUser }) {
             Bills received from suppliers. Outstanding across current view: {inr.format(totalOutstanding)}
           </p>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <Button asChild className="bg-navy text-white hover:bg-navy-light dark:bg-gold dark:text-navy">
             <Link href="/accounts/purchases/new">
               <Plus className="size-4" /> Add Purchase Bill

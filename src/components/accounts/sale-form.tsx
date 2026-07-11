@@ -73,8 +73,8 @@ const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR",
 
 export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser }) {
   const router = useRouter();
-  const isAdmin = user.role === "admin";
-  const readOnly = !isAdmin;
+  // Both Admin and CA have full edit access.
+  const readOnly = false;
 
   const [parties, setParties] = React.useState<Party[]>([]);
   const [items, setItems] = React.useState<Item[]>([]);

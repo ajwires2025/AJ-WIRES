@@ -18,42 +18,36 @@ service cloud.firestore {
       return isAdmin() || isCA();
     }
 
-    // User directory (admin/ca accounts). Only the admin manages accounts;
-    // both roles can read the directory to show names in the UI.
+    // User directory (admin/ca accounts). Managing who can log in stays
+    // admin-only; both roles can read the directory to show names in the UI.
     match /users/{userId} {
       allow read: if isStaff();
       allow write: if isAdmin();
     }
 
     // Master data: customers/suppliers and the item catalog.
-    // Both roles can read and search; only the admin creates/edits/deletes.
+    // Both Admin and CA have full read/write access.
     match /parties/{partyId} {
-      allow read: if isStaff();
-      allow write: if isAdmin();
+      allow read, write: if isStaff();
     }
 
     match /items/{itemId} {
-      allow read: if isStaff();
-      allow write: if isAdmin();
+      allow read, write: if isStaff();
     }
 
-    // Purchase bills. Both roles read; only the admin creates/edits/deletes
-    // (CA review/reconciliation notes are a later addition).
+    // Purchase bills. Both Admin and CA have full read/write access.
     match /purchases/{purchaseId} {
-      allow read: if isStaff();
-      allow write: if isAdmin();
+      allow read, write: if isStaff();
     }
 
     // Sales invoices. Same access pattern as purchases.
     match /sales/{saleId} {
-      allow read: if isStaff();
-      allow write: if isAdmin();
+      allow read, write: if isStaff();
     }
 
     // Sequential invoice-number counters, one doc per financial year.
-    // Admin-only — CA never issues invoice numbers.
     match /counters/{counterId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isStaff();
     }
 
     // Everything else (payments, remindersLog, ...) is added
