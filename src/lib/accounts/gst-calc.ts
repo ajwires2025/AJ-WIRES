@@ -93,3 +93,24 @@ export function derivePaymentStatus(grandTotal: number, amountPaid: number): "un
   if (amountPaid >= grandTotal) return "paid";
   return "partial";
 }
+
+export function calcLineMargin(quantity: number, rate: number, costPrice: number): number {
+  return round2((rate - costPrice) * quantity);
+}
+
+export type SaleTotals = BillTotals & {
+  cogsTotal: number;
+  grossProfit: number;
+  marginPercent: number;
+};
+
+export function calcSaleTotals(
+  items: (BillItemLine & { costPrice: number; lineMargin: number })[]
+): SaleTotals {
+  const billTotals = calcBillTotals(items);
+  const cogsTotal = round2(items.reduce((sum, i) => sum + i.costPrice * i.quantity, 0));
+  const grossProfit = round2(billTotals.taxableValue - cogsTotal);
+  const marginPercent = billTotals.taxableValue > 0 ? round2((grossProfit / billTotals.taxableValue) * 100) : 0;
+
+  return { ...billTotals, cogsTotal, grossProfit, marginPercent };
+}

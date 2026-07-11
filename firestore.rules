@@ -44,7 +44,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Everything else (sales, payments, remindersLog, ...) is added
+    // Sales invoices. Same access pattern as purchases.
+    match /sales/{saleId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // Sequential invoice-number counters, one doc per financial year.
+    // Admin-only — CA never issues invoice numbers.
+    match /counters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Everything else (payments, remindersLog, ...) is added
     // collection-by-collection in later milestones. Deny by default until
     // each one is explicitly opened up.
     match /{document=**} {

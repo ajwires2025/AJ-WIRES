@@ -102,6 +102,41 @@ export type Purchase = {
 
 export type PurchaseInput = Omit<Purchase, "id" | "createdBy" | "createdAt">;
 
+export type SaleItemLine = BillItemLine & {
+  costPrice: number;
+  lineMargin: number;
+};
+
+export type Sale = {
+  id: string;
+  customerId: string;
+  customerName: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  placeOfSupplyStateCode: string;
+  items: SaleItemLine[];
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  roundOff: number;
+  grandTotal: number;
+  amountReceived: number;
+  paymentStatus: PaymentStatus;
+  invoiceFileUrl: string;
+  invoiceFileName: string;
+  cogsTotal: number;
+  grossProfit: number;
+  marginPercent: number;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type SaleInput = Omit<Sale, "id" | "createdBy" | "createdAt">;
+
 // Defaults to be verified with the CA — not final. HSN digit-length and exact
 // rates depend on turnover/notification and must be confirmed before filing.
 export const DEFAULT_ITEMS: ItemInput[] = [
