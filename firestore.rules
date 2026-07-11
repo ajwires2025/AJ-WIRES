@@ -50,9 +50,14 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
-    // Everything else (payments, remindersLog, ...) is added
-    // collection-by-collection in later milestones. Deny by default until
-    // each one is explicitly opened up.
+    // Payments against purchase bills and sales invoices.
+    match /payments/{paymentId} {
+      allow read, write: if isStaff();
+    }
+
+    // Everything else (remindersLog, ...) is added collection-by-collection
+    // in later milestones. Deny by default until each one is explicitly
+    // opened up.
     match /{document=**} {
       allow read, write: if false;
     }

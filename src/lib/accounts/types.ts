@@ -137,6 +137,48 @@ export type Sale = {
 
 export type SaleInput = Omit<Sale, "id" | "createdBy" | "createdAt">;
 
+export type PaymentDirection = "received" | "paid";
+export type PaymentMethod = "bank" | "cash" | "upi" | "cheque";
+export type LinkedBillType = "sale" | "purchase";
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  bank: "Bank Transfer",
+  cash: "Cash",
+  upi: "UPI",
+  cheque: "Cheque",
+};
+
+export type Payment = {
+  id: string;
+  partyId: string;
+  partyName: string;
+  direction: PaymentDirection;
+  linkedType: LinkedBillType;
+  linkedId: string;
+  linkedNumber: string;
+  amount: number;
+  paymentDate: string;
+  method: PaymentMethod;
+  reference: string;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type PaymentInput = Omit<Payment, "id" | "createdBy" | "createdAt">;
+
+export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
+
+export type AgingRow = {
+  id: string;
+  number: string;
+  partyName: string;
+  dueDate: string;
+  daysOverdue: number;
+  bucket: AgingBucket;
+  outstanding: number;
+};
+
 // Defaults to be verified with the CA — not final. HSN digit-length and exact
 // rates depend on turnover/notification and must be confirmed before filing.
 export const DEFAULT_ITEMS: ItemInput[] = [
