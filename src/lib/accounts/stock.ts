@@ -59,18 +59,23 @@ export function computeItemStockLedger(item: Item, purchases: Purchase[], sales:
 
   events.sort((a, b) => a.date.localeCompare(b.date));
 
+  // Items created before opening-stock tracking was added won't have this
+  // field in their stored document at all — treat missing as zero.
+  const openingStock = item.openingStock ?? 0;
+  const defaultCostPrice = item.defaultCostPrice ?? 0;
+
   const movements: StockMovement[] = [];
-  let balanceQty = item.openingStock;
-  let balanceValue = round2(item.openingStock * item.defaultCostPrice);
+  let balanceQty = openingStock;
+  let balanceValue = round2(openingStock * defaultCostPrice);
 
   movements.push({
     date: "—",
     type: "opening",
     refNumber: "Opening balance",
     partyName: "",
-    qtyIn: item.openingStock,
+    qtyIn: openingStock,
     qtyOut: 0,
-    rate: item.defaultCostPrice,
+    rate: defaultCostPrice,
     balanceQty,
     balanceValue,
     avgCost: balanceQty > 0 ? round2(balanceValue / balanceQty) : 0,
@@ -129,7 +134,7 @@ export function computeStockSummary(items: Item[], purchases: Purchase[], sales:
       itemId: item.id,
       itemName: item.name,
       unit: item.unit,
-      openingStock: item.openingStock,
+      openingStock: item.openingStock ?? 0,
       totalIn: round3(totalIn),
       totalOut: round3(totalOut),
       closingQty: last.balanceQty,
