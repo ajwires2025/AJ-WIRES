@@ -99,6 +99,9 @@ export function Footer() {
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/50 sm:flex-row">
           <p>&copy; {new Date().getFullYear()} A.J. Wires. All rights reserved.</p>
           <p>Manufacturer &amp; Trader — Medchal, Hyderabad, Telangana, India</p>
+          <Link href="/accounts/login" className="hover:text-gold">
+            Staff Login
+          </Link>
         </div>
       </div>
     </footer>
