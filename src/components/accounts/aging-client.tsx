@@ -73,7 +73,52 @@ function AgingTable({
         ))}
       </div>
 
-      <div className="mt-4 overflow-x-auto">
+      {/* Card layout below sm — the table's 6-7 columns don't fit a phone
+          screen without hiding the point of the page (bucket/outstanding). */}
+      <div className="mt-4 space-y-2 sm:hidden">
+        {rows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Nothing outstanding.</p>
+        ) : (
+          rows
+            .sort((a, b) => b.daysOverdue - a.daysOverdue)
+            .map((r) => (
+              <div key={r.id} className="rounded-lg border border-border p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{r.number}</p>
+                    <p className="truncate text-sm text-muted-foreground">{r.partyName}</p>
+                  </div>
+                  <Badge variant="secondary" className={`shrink-0 ${BUCKET_BADGE[r.bucket]}`}>{r.bucket}</Badge>
+                </div>
+                <div className="mt-2 flex items-end justify-between gap-2">
+                  <div className="text-sm text-muted-foreground">
+                    <p>Due {r.dueDate}</p>
+                    <p>{r.daysOverdue > 0 ? `${r.daysOverdue} days overdue` : `Due in ${-r.daysOverdue} days`}</p>
+                  </div>
+                  <p className="font-heading text-base font-bold text-foreground">{inr.format(r.outstanding)}</p>
+                </div>
+                {onSendReminder && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-3 w-full"
+                    onClick={() => onSendReminder(r)}
+                  >
+                    <Mail className="size-3.5" /> Send reminder
+                  </Button>
+                )}
+              </div>
+            ))
+        )}
+        {rows.length > 0 && (
+          <div className="flex items-center justify-between rounded-lg border-t border-border px-1 pt-2 font-semibold text-foreground">
+            <span>Total outstanding</span>
+            <span className="tabular-nums">{inr.format(total)}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[560px] text-sm">
           <thead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <tr>

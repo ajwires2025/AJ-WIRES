@@ -111,7 +111,61 @@ export function PartiesClient({ user }: { user: SessionUser }) {
         </Select>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-border">
+      {/* Card layout below sm — 6-7 columns don't fit a phone screen. */}
+      <div className="mt-6 space-y-2 sm:hidden">
+        {loading ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">Loading...</p>
+        ) : filtered.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No parties found.</p>
+        ) : (
+          filtered.map((party) => (
+            <div key={party.id} className="rounded-lg border border-border p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{party.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {party.contactPerson || party.phone || party.state}
+                  </p>
+                </div>
+                <Badge className={`shrink-0 ${TYPE_BADGE[party.type]}`} variant="secondary">
+                  {party.type}
+                </Badge>
+              </div>
+              <div className="mt-2 flex items-end justify-between gap-2">
+                <p className="text-sm text-muted-foreground">{party.gstin || "No GSTIN"}</p>
+                <p className="font-heading text-base font-bold text-foreground">
+                  {inr.format(party.openingBalance || 0)}
+                </p>
+              </div>
+              {canEdit && (
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setEditingParty(party);
+                      setFormOpen(true);
+                    }}
+                  >
+                    <Pencil className="size-3.5" /> Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeletingParty(party)}
+                  >
+                    <Trash2 className="size-3.5" /> Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-hidden rounded-xl border border-border sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-muted/50 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

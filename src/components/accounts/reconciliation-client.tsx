@@ -102,7 +102,45 @@ export function ReconciliationClient() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-border">
+      {/* Card layout below sm — 7 columns don't fit a phone screen. */}
+      <div className="mt-6 space-y-2 sm:hidden">
+        {rows.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No payments in this period.</p>
+        ) : (
+          rows.map((p) => (
+            <div key={p.id} className="rounded-lg border border-border p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{p.partyName}</p>
+                  <p className="text-sm text-muted-foreground">{p.paymentDate} · {PAYMENT_METHOD_LABELS[p.method]}</p>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className={`shrink-0 ${p.direction === "received" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}
+                >
+                  {p.direction}
+                </Badge>
+              </div>
+              {p.reference && <p className="mt-1 text-sm text-muted-foreground">Ref: {p.reference}</p>}
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="font-heading text-base font-bold text-foreground">{inr.format(p.amount)}</p>
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={p.reconciled}
+                    onChange={() => handleToggle(p)}
+                    className="size-4 cursor-pointer accent-gold"
+                    aria-label={`Mark payment to ${p.partyName} as reconciled`}
+                  />
+                  Reconciled
+                </label>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-hidden rounded-xl border border-border sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-muted/50 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

@@ -1,18 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { Settings, Loader2, Save } from "lucide-react";
+import { Settings, Loader2, Save, Download, DatabaseBackup } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { subscribeToReminderSettings, updateReminderSettings } from "@/lib/accounts/reminders";
+import { exportAllDataToExcel } from "@/lib/accounts/backup";
 import { DEFAULT_REMINDER_SETTINGS } from "@/lib/accounts/types";
 import type { ReminderSettings } from "@/lib/accounts/types";
 
 export function SettingsClient() {
   const [settings, setSettings] = React.useState<ReminderSettings>(DEFAULT_REMINDER_SETTINGS);
   const [saving, setSaving] = React.useState(false);
+  const [exporting, setExporting] = React.useState(false);
 
   React.useEffect(() => subscribeToReminderSettings(setSettings), []);
 
@@ -25,6 +27,18 @@ export function SettingsClient() {
       toast.error("Couldn't save. Try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await exportAllDataToExcel();
+      toast.success("Backup downloaded");
+    } catch {
+      toast.error("Couldn't export. Try again.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -58,6 +72,19 @@ export function SettingsClient() {
           className="mt-5 bg-navy text-white hover:bg-navy-light dark:bg-gold dark:text-navy"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save
+        </Button>
+      </div>
+
+      <div className="mt-6 max-w-md rounded-xl border border-border bg-card p-6">
+        <h2 className="flex items-center gap-2 font-heading text-base font-semibold text-foreground">
+          <DatabaseBackup className="size-4.5 text-gold" /> Backup
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Download every party, item, purchase, sale, payment, and reminder as a single Excel file —
+          a snapshot for your records or to hand off to your CA.
+        </p>
+        <Button onClick={handleExport} disabled={exporting} variant="outline" className="mt-4">
+          {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} Export all data to Excel
         </Button>
       </div>
     </div>

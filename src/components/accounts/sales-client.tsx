@@ -94,7 +94,41 @@ export function SalesClient({ user }: { user: SessionUser }) {
         </Select>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-border">
+      {/* Card layout below sm — 7 columns don't fit a phone screen. */}
+      <div className="mt-6 space-y-2 sm:hidden">
+        {loading ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">Loading...</p>
+        ) : filtered.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No sales invoices found.</p>
+        ) : (
+          filtered.map((s) => (
+            <Link
+              key={s.id}
+              href={`/accounts/sales/${s.id}`}
+              className="block rounded-lg border border-border p-3 hover:bg-muted/30"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{s.invoiceNumber}</p>
+                  <p className="truncate text-sm text-muted-foreground">{s.customerName}</p>
+                </div>
+                <Badge variant="secondary" className={`shrink-0 ${STATUS_BADGE[s.paymentStatus]}`}>
+                  {PAYMENT_STATUS_LABELS[s.paymentStatus]}
+                </Badge>
+              </div>
+              <div className="mt-2 flex items-end justify-between gap-2">
+                <div className="text-sm text-muted-foreground">
+                  <p>Due {s.dueDate}</p>
+                  <p className="text-gold-light dark:text-gold">Profit: {inr.format(s.grossProfit)}</p>
+                </div>
+                <p className="font-heading text-base font-bold text-foreground">{inr.format(s.grandTotal)}</p>
+              </div>
+            </Link>
+          ))
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-hidden rounded-xl border border-border sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-sm">
             <thead className="bg-muted/50 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

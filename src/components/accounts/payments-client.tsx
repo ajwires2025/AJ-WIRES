@@ -93,7 +93,46 @@ export function PaymentsClient({ user }: { user: SessionUser }) {
         </Select>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-border">
+      {/* Card layout below sm — 7 columns don't fit a phone screen. */}
+      <div className="mt-6 space-y-2 sm:hidden">
+        {loading ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">Loading...</p>
+        ) : filtered.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No payments recorded yet.</p>
+        ) : (
+          filtered.map((p) => (
+            <div key={p.id} className="rounded-lg border border-border p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{p.partyName}</p>
+                  <p className="text-sm text-muted-foreground">{p.linkedNumber} · {p.paymentDate}</p>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className={`shrink-0 gap-1 ${p.direction === "received" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"}`}
+                >
+                  {p.direction === "received" ? <ArrowDownCircle className="size-3.5" /> : <ArrowUpCircle className="size-3.5" />}
+                  {p.direction === "received" ? "Received" : "Paid"}
+                </Badge>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-sm text-muted-foreground">{PAYMENT_METHOD_LABELS[p.method]}</p>
+                <p className="font-heading text-base font-bold text-foreground">{inr.format(p.amount)}</p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-2 w-full text-destructive hover:bg-destructive/10"
+                onClick={() => setDeletingPayment(p)}
+              >
+                <Trash2 className="size-3.5" /> Delete
+              </Button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-hidden rounded-xl border border-border sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-muted/50 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
