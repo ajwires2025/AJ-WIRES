@@ -1,0 +1,124 @@
+import type { Party, Purchase, Sale, Payment } from "@/lib/accounts/types";
+
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+export type LedgerAccountType = "asset" | "liability" | "income" | "expense" | "party";
+
+export type LedgerEntry = {
+  date: string;
+  voucherType: "Purchase" | "Sales" | "Payment" | "Opening";
+  refNumber: string;
+  narration: string;
+  debit: number;
+  credit: number;
+};
+
+export type LedgerAccount = {
+  name: string;
+  type: LedgerAccountType;
+  entries: LedgerEntry[];
+  totalDebit: number;
+  totalCredit: number;
+  balance: number; // positive = net debit balance, negative = net credit balance
+};
+
+const FIXED_ACCOUNTS: { name: string; type: LedgerAccountType }[] = [
+  { name: "Cash", type: "asset" },
+  { name: "Bank", type: "asset" },
+  { name: "Sales", type: "income" },
+  { name: "Purchases", type: "expense" },
+  { name: "Input CGST", type: "asset" },
+  { name: "Input SGST", type: "asset" },
+  { name: "Input IGST", type: "asset" },
+  { name: "Output CGST", type: "liability" },
+  { name: "Output SGST", type: "liability" },
+  { name: "Output IGST", type: "liability" },
+  { name: "Round Off", type: "expense" },
+];
+
+function post(
+  ledgers: Map<string, LedgerAccount>,
+  accountName: string,
+  type: LedgerAccountType,
+  entry: LedgerEntry
+) {
+  let account = ledgers.get(accountName);
+  if (!account) {
+    account = { name: accountName, type, entries: [], totalDebit: 0, totalCredit: 0, balance: 0 };
+    ledgers.set(accountName, account);
+  }
+  account.entries.push(entry);
+  account.totalDebit = round2(account.totalDebit + entry.debit);
+  account.totalCredit = round2(account.totalCredit + entry.credit);
+  account.balance = round2(account.totalDebit - account.totalCredit);
+}
+
+function cashOrBank(method: Payment["method"]): "Cash" | "Bank" {
+  return method === "cash" ? "Cash" : "Bank";
+}
+
+// Every purchase, sale, and payment is posted as a balanced double-entry
+// journal entry — this is computed fresh from the transactional records
+// (not a separately-stored ledger), so it can never drift out of sync.
+export function buildGeneralLedger(
+  parties: Party[],
+  purchases: Purchase[],
+  sales: Sale[],
+  payments: Payment[]
+): LedgerAccount[] {
+  const ledgers = new Map<string, LedgerAccount>();
+  for (const acc of FIXED_ACCOUNTS) {
+    ledgers.set(acc.name, { name: acc.name, type: acc.type, entries: [], totalDebit: 0, totalCredit: 0, balance: 0 });
+  }
+  for (const party of parties) {
+    ledgers.set(party.name, { name: party.name, type: "party", entries: [], totalDebit: 0, totalCredit: 0, balance: 0 });
+    if (party.openingBalance) {
+      post(ledgers, party.name, "party", {
+        date: "—",
+        voucherType: "Opening",
+        refNumber: "Opening balance",
+        narration: "Opening balance",
+        debit: party.openingBalance > 0 ? party.openingBalance : 0,
+        credit: party.openingBalance < 0 ? -party.openingBalance : 0,
+      });
+    }
+  }
+
+  for (const p of purchases) {
+    const narration = `Purchase from ${p.supplierName}`;
+    if (p.taxableValue) post(ledgers, "Purchases", "expense", { date: p.billDate, voucherType: "Purchase", refNumber: p.billNumber, narration, debit: p.taxableValue, credit: 0 });
+    if (p.cgst) post(ledgers, "Input CGST", "asset", { date: p.billDate, voucherType: "Purchase", refNumber: p.billNumber, narration, debit: p.cgst, credit: 0 });
+    if (p.sgst) post(ledgers, "Input SGST", "asset", { date: p.billDate, voucherType: "Purchase", refNumber: p.billNumber, narration, debit: p.sgst, credit: 0 });
+    if (p.igst) post(ledgers, "Input IGST", "asset", { date: p.billDate, voucherType: "Purchase", refNumber: p.billNumber, narration, debit: p.igst, credit: 0 });
+    if (p.roundOff) post(ledgers, "Round Off", "expense", { date: p.billDate, voucherType: "Purchase", refNumber: p.billNumber, narration, debit: p.roundOff > 0 ? p.roundOff : 0, credit: p.roundOff < 0 ? -p.roundOff : 0 });
+    post(ledgers, p.supplierName, "party", { date: p.billDate, voucherType: "Purchase", refNumber: p.billNumber, narration, debit: 0, credit: p.grandTotal });
+  }
+
+  for (const s of sales) {
+    const narration = `Sale to ${s.customerName}`;
+    post(ledgers, s.customerName, "party", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: s.grandTotal, credit: 0 });
+    if (s.taxableValue) post(ledgers, "Sales", "income", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: 0, credit: s.taxableValue });
+    if (s.cgst) post(ledgers, "Output CGST", "liability", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: 0, credit: s.cgst });
+    if (s.sgst) post(ledgers, "Output SGST", "liability", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: 0, credit: s.sgst });
+    if (s.igst) post(ledgers, "Output IGST", "liability", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: 0, credit: s.igst });
+    if (s.roundOff) post(ledgers, "Round Off", "expense", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: s.roundOff < 0 ? -s.roundOff : 0, credit: s.roundOff > 0 ? s.roundOff : 0 });
+  }
+
+  for (const pay of payments) {
+    const cashBank = cashOrBank(pay.method);
+    const narration = `${pay.direction === "received" ? "Received from" : "Paid to"} ${pay.partyName} (${pay.linkedNumber})`;
+    if (pay.direction === "received") {
+      post(ledgers, cashBank, "asset", { date: pay.paymentDate, voucherType: "Payment", refNumber: pay.linkedNumber, narration, debit: pay.amount, credit: 0 });
+      post(ledgers, pay.partyName, "party", { date: pay.paymentDate, voucherType: "Payment", refNumber: pay.linkedNumber, narration, debit: 0, credit: pay.amount });
+    } else {
+      post(ledgers, pay.partyName, "party", { date: pay.paymentDate, voucherType: "Payment", refNumber: pay.linkedNumber, narration, debit: pay.amount, credit: 0 });
+      post(ledgers, cashBank, "asset", { date: pay.paymentDate, voucherType: "Payment", refNumber: pay.linkedNumber, narration, debit: 0, credit: pay.amount });
+    }
+  }
+
+  return Array.from(ledgers.values())
+    .filter((acc) => acc.entries.length > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
