@@ -43,6 +43,7 @@ async function applyAmountDelta(linkedType: "sale" | "purchase", linkedId: strin
 export async function createPayment(input: PaymentInput, createdBy: string): Promise<string> {
   const docRef = await addDoc(paymentsCol, {
     ...input,
+    reconciled: false,
     createdBy,
     createdAt: new Date().toISOString(),
   });
@@ -53,4 +54,8 @@ export async function createPayment(input: PaymentInput, createdBy: string): Pro
 export async function deletePayment(payment: Payment) {
   await deleteDoc(doc(db, "payments", payment.id));
   await applyAmountDelta(payment.linkedType, payment.linkedId, -payment.amount);
+}
+
+export async function setPaymentReconciled(paymentId: string, reconciled: boolean) {
+  await updateDoc(doc(db, "payments", paymentId), { reconciled });
 }

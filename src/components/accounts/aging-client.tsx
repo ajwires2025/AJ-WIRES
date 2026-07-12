@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { daysOverdue, agingBucket } from "@/lib/accounts/aging";
+import { downloadCsv } from "@/lib/accounts/csv";
 import type { Sale, Purchase, AgingBucket, AgingRow } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -25,11 +27,30 @@ function AgingTable({ title, icon, rows }: { title: string; icon: React.ReactNod
   }, { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0 });
   const total = rows.reduce((s, r) => s + r.outstanding, 0);
 
+  const handleExport = () => {
+    downloadCsv(
+      `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`,
+      rows.map((r) => ({
+        "Bill #": r.number,
+        Party: r.partyName,
+        "Due date": r.dueDate,
+        "Days overdue": r.daysOverdue,
+        Bucket: r.bucket,
+        Outstanding: r.outstanding,
+      }))
+    );
+  };
+
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <h2 className="flex items-center gap-2 font-heading text-base font-semibold text-foreground">
-        {icon} {title}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 font-heading text-base font-semibold text-foreground">
+          {icon} {title}
+        </h2>
+        <Button size="sm" variant="outline" onClick={handleExport} disabled={rows.length === 0}>
+          <Download className="size-3.5" /> Export CSV
+        </Button>
+      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {BUCKETS.map((b) => (

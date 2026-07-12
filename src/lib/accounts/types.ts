@@ -162,11 +162,12 @@ export type Payment = {
   method: PaymentMethod;
   reference: string;
   notes: string;
+  reconciled: boolean;
   createdBy: string;
   createdAt: string;
 };
 
-export type PaymentInput = Omit<Payment, "id" | "createdBy" | "createdAt">;
+export type PaymentInput = Omit<Payment, "id" | "createdBy" | "createdAt" | "reconciled">;
 
 export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 

@@ -19,6 +19,8 @@ import {
   Landmark,
   ChevronDown,
   BarChart3,
+  FileText,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -49,7 +51,10 @@ const primaryNavItems = [
 ];
 
 const reportNavItems = [
+  { href: "/accounts/pnl", label: "Profit & Loss", icon: FileText },
+  { href: "/accounts/cash-flow", label: "Cash Flow", icon: Wallet },
   { href: "/accounts/aging", label: "Aging", icon: TrendingUp },
+  { href: "/accounts/reconciliation", label: "Reconciliation", icon: CheckCircle2 },
   { href: "/accounts/stock-ledger", label: "Stock Ledger", icon: Boxes },
   { href: "/accounts/ledger", label: "General Ledger", icon: BookOpen },
   { href: "/accounts/trial-balance", label: "Trial Balance", icon: Scale },
