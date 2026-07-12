@@ -15,6 +15,10 @@ import {
   Menu,
   Boxes,
   BookOpen,
+  Scale,
+  Landmark,
+  ChevronDown,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -28,20 +32,36 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { auth } from "@/lib/firebase/client";
 import type { SessionUser } from "@/lib/firebase/session";
 
-const navItems = [
+const primaryNavItems = [
   { href: "/accounts/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/accounts/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/accounts/sales", label: "Sales", icon: Receipt },
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
+];
+
+const reportNavItems = [
   { href: "/accounts/aging", label: "Aging", icon: TrendingUp },
-  { href: "/accounts/stock-ledger", label: "Stock", icon: Boxes },
-  { href: "/accounts/ledger", label: "Ledger", icon: BookOpen },
+  { href: "/accounts/stock-ledger", label: "Stock Ledger", icon: Boxes },
+  { href: "/accounts/ledger", label: "General Ledger", icon: BookOpen },
+  { href: "/accounts/trial-balance", label: "Trial Balance", icon: Scale },
+  { href: "/accounts/balance-sheet", label: "Balance Sheet", icon: Landmark },
+];
+
+const masterDataNavItems = [
   { href: "/accounts/parties", label: "Parties", icon: Users },
   { href: "/accounts/items", label: "Items", icon: Package },
 ];
+
+const allNavItems = [...primaryNavItems, ...reportNavItems, ...masterDataNavItems];
 
 export function AccountsShell({
   user,
@@ -52,6 +72,7 @@ export function AccountsShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const isReportsActive = reportNavItems.some((item) => item.href === pathname);
 
   const handleSignOut = async () => {
     try {
@@ -64,6 +85,12 @@ export function AccountsShell({
     }
   };
 
+  const linkClass = (active: boolean) =>
+    cn(
+      "rounded-md px-3 py-1.5 text-sm font-medium hover:bg-white/10 hover:text-white",
+      active ? "bg-white/10 text-white" : "text-white/70"
+    );
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b border-border bg-navy">
@@ -74,15 +101,31 @@ export function AccountsShell({
           </div>
 
           <nav className="hidden items-center gap-1 lg:flex">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium hover:bg-white/10 hover:text-white",
-                  pathname === item.href ? "bg-white/10 text-white" : "text-white/70"
-                )}
-              >
+            {primaryNavItems.map((item) => (
+              <Link key={item.href} href={item.href} className={linkClass(pathname === item.href)}>
+                {item.label}
+              </Link>
+            ))}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className={cn(linkClass(isReportsActive), "flex items-center gap-1")}>
+                  <BarChart3 className="size-4" /> Reports <ChevronDown className="size-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {reportNavItems.map((item) => (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link href={item.href} className={pathname === item.href ? "bg-accent" : ""}>
+                      <item.icon className="size-4" /> {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {masterDataNavItems.map((item) => (
+              <Link key={item.href} href={item.href} className={linkClass(pathname === item.href)}>
                 {item.label}
               </Link>
             ))}
@@ -114,7 +157,7 @@ export function AccountsShell({
                     <Menu className="size-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[300px] sm:w-[360px]">
+                <SheetContent side="right" className="w-[300px] overflow-y-auto sm:w-[360px]">
                   <SheetHeader>
                     <SheetTitle className="flex items-center gap-2 font-heading">
                       <ShieldCheck className="size-5 text-gold" /> A.J. Wires Accounts
@@ -125,7 +168,7 @@ export function AccountsShell({
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">{user.role}</p>
                   </div>
                   <nav className="flex flex-col gap-1 px-4">
-                    {navItems.map((item) => (
+                    {allNavItems.map((item) => (
                       <SheetClose asChild key={item.href}>
                         <Link
                           href={item.href}
