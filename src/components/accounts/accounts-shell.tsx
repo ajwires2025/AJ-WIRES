@@ -21,6 +21,8 @@ import {
   BarChart3,
   FileText,
   CheckCircle2,
+  History,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -55,6 +57,7 @@ const reportNavItems = [
   { href: "/accounts/cash-flow", label: "Cash Flow", icon: Wallet },
   { href: "/accounts/aging", label: "Aging", icon: TrendingUp },
   { href: "/accounts/reconciliation", label: "Reconciliation", icon: CheckCircle2 },
+  { href: "/accounts/reminders-log", label: "Reminders Log", icon: History },
   { href: "/accounts/stock-ledger", label: "Stock Ledger", icon: Boxes },
   { href: "/accounts/ledger", label: "General Ledger", icon: BookOpen },
   { href: "/accounts/trial-balance", label: "Trial Balance", icon: Scale },
@@ -64,6 +67,7 @@ const reportNavItems = [
 const masterDataNavItems = [
   { href: "/accounts/parties", label: "Parties", icon: Users },
   { href: "/accounts/items", label: "Items", icon: Package },
+  { href: "/accounts/settings", label: "Settings", icon: Settings },
 ];
 
 const allNavItems = [...primaryNavItems, ...reportNavItems, ...masterDataNavItems];

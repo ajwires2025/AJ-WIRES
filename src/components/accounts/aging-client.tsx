@@ -1,14 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { TrendingUp, TrendingDown, Download } from "lucide-react";
+import { TrendingUp, TrendingDown, Download, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
+import { subscribeToParties } from "@/lib/accounts/parties";
 import { daysOverdue, agingBucket } from "@/lib/accounts/aging";
 import { downloadCsv } from "@/lib/accounts/csv";
-import type { Sale, Purchase, AgingBucket, AgingRow } from "@/lib/accounts/types";
+import { SendReminderDialog } from "@/components/accounts/send-reminder-dialog";
+import type { Sale, Purchase, Party, AgingBucket, AgingRow } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const BUCKETS: AgingBucket[] = ["0-30", "31-60", "61-90", "90+"];
@@ -20,7 +22,17 @@ const BUCKET_BADGE: Record<AgingBucket, string> = {
   "90+": "bg-destructive/10 text-destructive",
 };
 
-function AgingTable({ title, icon, rows }: { title: string; icon: React.ReactNode; rows: AgingRow[] }) {
+function AgingTable({
+  title,
+  icon,
+  rows,
+  onSendReminder,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  rows: AgingRow[];
+  onSendReminder?: (row: AgingRow) => void;
+}) {
   const bucketTotals = BUCKETS.reduce<Record<AgingBucket, number>>((acc, b) => {
     acc[b] = rows.filter((r) => r.bucket === b).reduce((s, r) => s + r.outstanding, 0);
     return acc;
@@ -71,11 +83,12 @@ function AgingTable({ title, icon, rows }: { title: string; icon: React.ReactNod
               <th className="py-2 text-right">Days overdue</th>
               <th className="py-2 text-left">Bucket</th>
               <th className="py-2 text-right">Outstanding</th>
+              {onSendReminder && <th className="py-2 text-right">Reminder</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {rows.length === 0 ? (
-              <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">Nothing outstanding.</td></tr>
+              <tr><td colSpan={onSendReminder ? 7 : 6} className="py-6 text-center text-muted-foreground">Nothing outstanding.</td></tr>
             ) : (
               rows
                 .sort((a, b) => b.daysOverdue - a.daysOverdue)
@@ -89,6 +102,13 @@ function AgingTable({ title, icon, rows }: { title: string; icon: React.ReactNod
                       <Badge variant="secondary" className={BUCKET_BADGE[r.bucket]}>{r.bucket}</Badge>
                     </td>
                     <td className="py-2 text-right tabular-nums text-foreground">{inr.format(r.outstanding)}</td>
+                    {onSendReminder && (
+                      <td className="py-2 text-right">
+                        <Button size="icon-sm" variant="ghost" onClick={() => onSendReminder(r)} title="Send reminder">
+                          <Mail className="size-4" />
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))
             )}
@@ -96,7 +116,7 @@ function AgingTable({ title, icon, rows }: { title: string; icon: React.ReactNod
           {rows.length > 0 && (
             <tfoot>
               <tr className="border-t border-border font-semibold text-foreground">
-                <td className="py-2" colSpan={5}>Total outstanding</td>
+                <td className="py-2" colSpan={onSendReminder ? 6 : 5}>Total outstanding</td>
                 <td className="py-2 text-right tabular-nums">{inr.format(total)}</td>
               </tr>
             </tfoot>
@@ -110,9 +130,14 @@ function AgingTable({ title, icon, rows }: { title: string; icon: React.ReactNod
 export function AgingClient() {
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
+  const [parties, setParties] = React.useState<Party[]>([]);
+  const [reminderRow, setReminderRow] = React.useState<AgingRow | null>(null);
 
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
+  React.useEffect(() => subscribeToParties(setParties), []);
+
+  const emailById = new Map(parties.map((p) => [p.id, p.email]));
 
   const receivables: AgingRow[] = sales
     .filter((s) => s.paymentStatus !== "paid")
@@ -122,6 +147,7 @@ export function AgingClient() {
         id: s.id,
         number: s.invoiceNumber,
         partyName: s.customerName,
+        partyEmail: emailById.get(s.customerId) ?? "",
         dueDate: s.dueDate,
         daysOverdue: days,
         bucket: agingBucket(days),
@@ -137,6 +163,7 @@ export function AgingClient() {
         id: p.id,
         number: p.billNumber,
         partyName: p.supplierName,
+        partyEmail: emailById.get(p.supplierId) ?? "",
         dueDate: p.dueDate,
         daysOverdue: days,
         bucket: agingBucket(days),
@@ -152,9 +179,16 @@ export function AgingClient() {
       </p>
 
       <div className="mt-6 space-y-6">
-        <AgingTable title="Receivables (customers owe you)" icon={<TrendingUp className="size-5 text-emerald-500" />} rows={receivables} />
+        <AgingTable
+          title="Receivables (customers owe you)"
+          icon={<TrendingUp className="size-5 text-emerald-500" />}
+          rows={receivables}
+          onSendReminder={setReminderRow}
+        />
         <AgingTable title="Payables (you owe suppliers)" icon={<TrendingDown className="size-5 text-destructive" />} rows={payables} />
       </div>
+
+      <SendReminderDialog open={!!reminderRow} onOpenChange={(open) => !open && setReminderRow(null)} row={reminderRow} />
     </div>
   );
 }

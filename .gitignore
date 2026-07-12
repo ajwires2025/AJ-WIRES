@@ -48,3 +48,4 @@ next-env.d.ts
 
 # Firebase service account key — never commit
 /secrets/
+firebase-debug.log

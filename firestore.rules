@@ -55,9 +55,20 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
-    // Everything else (remindersLog, ...) is added collection-by-collection
-    // in later milestones. Deny by default until each one is explicitly
-    // opened up.
+    // Log of every reminder email sent (or attempted) — written by the
+    // server-side send API using the Admin SDK, but readable here so the UI
+    // can show history.
+    match /remindersLog/{logId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    // App-wide settings (e.g. reminder due-soon-days threshold).
+    match /settings/{settingId} {
+      allow read, write: if isStaff();
+    }
+
+    // Everything else is denied by default until explicitly opened up.
     match /{document=**} {
       allow read, write: if false;
     }

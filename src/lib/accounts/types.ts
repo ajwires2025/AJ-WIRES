@@ -175,11 +175,33 @@ export type AgingRow = {
   id: string;
   number: string;
   partyName: string;
+  partyEmail: string;
   dueDate: string;
   daysOverdue: number;
   bucket: AgingBucket;
   outstanding: number;
 };
+
+export type ReminderLog = {
+  id: string;
+  billType: "sale" | "purchase";
+  billId: string;
+  billNumber: string;
+  partyName: string;
+  sentTo: string;
+  channel: "email";
+  subject: string;
+  status: "sent" | "failed" | "not_configured";
+  errorMessage: string;
+  sentBy: string;
+  sentAt: string;
+};
+
+export type ReminderSettings = {
+  dueSoonDays: number;
+};
+
+export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = { dueSoonDays: 3 };
 
 // Defaults to be verified with the CA — not final. HSN digit-length and exact
 // rates depend on turnover/notification and must be confirmed before filing.

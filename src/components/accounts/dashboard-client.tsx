@@ -47,6 +47,7 @@ import {
 } from "@/lib/accounts/dashboard";
 import { currentMonthKey, lastMonthKeys, monthPeriod, financialYearPeriod, type Period } from "@/lib/accounts/period";
 import { currentFinancialYearKey } from "@/lib/accounts/invoice-number";
+import { OverdueAlertsPanel } from "@/components/accounts/overdue-alerts-panel";
 import type { Sale, Purchase, Payment } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -149,6 +150,10 @@ export function DashboardClient({ userName }: { userName: string }) {
             </Select>
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <OverdueAlertsPanel />
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
