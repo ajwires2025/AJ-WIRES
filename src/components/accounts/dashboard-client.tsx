@@ -39,6 +39,7 @@ import {
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToPayments } from "@/lib/accounts/payments";
+import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import {
   calcDashboardSummary,
   buildMonthlyTrend,
@@ -48,7 +49,7 @@ import {
 import { currentMonthKey, lastMonthKeys, monthPeriod, financialYearPeriod, type Period } from "@/lib/accounts/period";
 import { currentFinancialYearKey } from "@/lib/accounts/invoice-number";
 import { OverdueAlertsPanel } from "@/components/accounts/overdue-alerts-panel";
-import type { Sale, Purchase, Payment } from "@/lib/accounts/types";
+import type { Sale, Purchase, Payment, Expense } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const inrCompact = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", notation: "compact", maximumFractionDigits: 1 });
@@ -106,15 +107,17 @@ export function DashboardClient({ userName }: { userName: string }) {
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [periodMode, setPeriodMode] = React.useState<"month" | "fy">("month");
   const [monthKey, setMonthKey] = React.useState(currentMonthKey());
 
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
   React.useEffect(() => subscribeToPayments(setPayments), []);
+  React.useEffect(() => subscribeToExpenses(setExpenses), []);
 
   const period: Period = periodMode === "fy" ? financialYearPeriod() : monthPeriod(monthKey);
-  const summary = calcDashboardSummary(sales, purchases, payments, period);
+  const summary = calcDashboardSummary(sales, purchases, payments, expenses, period);
   const trend = buildMonthlyTrend(sales, purchases, lastMonthKeys(12));
   const topCustomers = topCustomersByValue(sales, period);
   const topItems = topItemsByValue(sales, period);
@@ -164,6 +167,12 @@ export function DashboardClient({ userName }: { userName: string }) {
           value={inr.format(summary.grossProfit)}
           icon={<TrendingUp className="size-5" />}
           tone={summary.grossProfit >= 0 ? "good" : "bad"}
+        />
+        <Tile
+          label="Net Profit"
+          value={inr.format(summary.netProfit)}
+          icon={<TrendingUp className="size-5" />}
+          tone={summary.netProfit >= 0 ? "good" : "bad"}
         />
         <Tile label="Margin %" value={`${summary.marginPercent}%`} icon={<Percent className="size-5" />} />
         <Tile label="Output GST" value={inr.format(summary.outputGst)} icon={<IndianRupee className="size-5" />} />

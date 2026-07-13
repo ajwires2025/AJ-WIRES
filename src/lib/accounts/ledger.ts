@@ -1,4 +1,4 @@
-import type { Party, Purchase, Sale, Payment } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense } from "@/lib/accounts/types";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -66,7 +66,8 @@ export function buildGeneralLedger(
   parties: Party[],
   purchases: Purchase[],
   sales: Sale[],
-  payments: Payment[]
+  payments: Payment[],
+  expenses: Expense[] = []
 ): LedgerAccount[] {
   const ledgers = new Map<string, LedgerAccount>();
   for (const acc of FIXED_ACCOUNTS) {
@@ -115,6 +116,24 @@ export function buildGeneralLedger(
     } else {
       post(ledgers, pay.partyName, "party", { date: pay.paymentDate, voucherType: "Payment", refNumber: pay.linkedNumber, narration, debit: pay.amount, credit: 0 });
       post(ledgers, cashBank, "asset", { date: pay.paymentDate, voucherType: "Payment", refNumber: pay.linkedNumber, narration, debit: 0, credit: pay.amount });
+    }
+  }
+
+  for (const exp of expenses) {
+    const cashBank = cashOrBank(exp.method);
+    const narration = exp.description || exp.category;
+    if (exp.direction === "expense") {
+      post(ledgers, exp.category, "expense", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.taxableValue, credit: 0 });
+      if (exp.cgst) post(ledgers, "Input CGST", "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.cgst, credit: 0 });
+      if (exp.sgst) post(ledgers, "Input SGST", "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.sgst, credit: 0 });
+      if (exp.igst) post(ledgers, "Input IGST", "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.igst, credit: 0 });
+      post(ledgers, cashBank, "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.grandTotal });
+    } else {
+      post(ledgers, cashBank, "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.grandTotal, credit: 0 });
+      post(ledgers, exp.category, "income", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.taxableValue });
+      if (exp.cgst) post(ledgers, "Output CGST", "liability", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.cgst });
+      if (exp.sgst) post(ledgers, "Output SGST", "liability", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.sgst });
+      if (exp.igst) post(ledgers, "Output IGST", "liability", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.igst });
     }
   }
 

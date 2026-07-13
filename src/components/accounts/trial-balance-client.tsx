@@ -6,8 +6,9 @@ import { subscribeToParties } from "@/lib/accounts/parties";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPayments } from "@/lib/accounts/payments";
+import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { buildGeneralLedger, type LedgerAccountType } from "@/lib/accounts/ledger";
-import type { Party, Purchase, Sale, Payment } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -29,13 +30,15 @@ export function TrialBalanceClient() {
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [expenses, setExpenses] = React.useState<Expense[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToPayments(setPayments), []);
+  React.useEffect(() => subscribeToExpenses(setExpenses), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses);
   const totalDebit = round2(ledger.reduce((s, a) => s + (a.balance > 0 ? a.balance : 0), 0));
   const totalCredit = round2(ledger.reduce((s, a) => s + (a.balance < 0 ? -a.balance : 0), 0));
   const inBalance = Math.abs(totalDebit - totalCredit) < 0.01;

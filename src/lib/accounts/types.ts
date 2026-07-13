@@ -169,6 +169,55 @@ export type Payment = {
 
 export type PaymentInput = Omit<Payment, "id" | "createdBy" | "createdAt" | "reconciled">;
 
+export type ExpenseDirection = "expense" | "income";
+
+export type Expense = {
+  id: string;
+  direction: ExpenseDirection;
+  category: string;
+  description: string;
+  partyName: string;
+  amount: number;
+  date: string;
+  method: PaymentMethod;
+  gstApplicable: boolean;
+  gstRate: number;
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  grandTotal: number;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type ExpenseInput = Omit<Expense, "id" | "createdBy" | "createdAt">;
+
+export const EXPENSE_CATEGORIES = [
+  "Rent",
+  "Salaries & Wages",
+  "Electricity",
+  "Fuel & Transport",
+  "Repairs & Maintenance",
+  "Office Supplies",
+  "Telephone & Internet",
+  "Bank Charges",
+  "Professional Fees",
+  "Insurance",
+  "Freight & Courier",
+  "Other Expense",
+];
+
+export const INCOME_CATEGORIES = [
+  "Interest Income",
+  "Rent Received",
+  "Commission Income",
+  "Scrap Sale",
+  "Other Income",
+];
+
 export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 
 export type AgingRow = {

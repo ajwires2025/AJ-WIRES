@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Receipt,
   Wallet,
+  ReceiptText,
   TrendingUp,
   Menu,
   Boxes,
@@ -50,6 +51,7 @@ const primaryNavItems = [
   { href: "/accounts/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/accounts/sales", label: "Sales", icon: Receipt },
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
+  { href: "/accounts/expenses", label: "Expenses", icon: ReceiptText },
 ];
 
 const reportNavItems = [

@@ -11,11 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { subscribeToSales } from "@/lib/accounts/sales";
+import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { calcProfitAndLoss } from "@/lib/accounts/pnl";
 import { downloadCsv } from "@/lib/accounts/csv";
 import { currentMonthKey, lastMonthKeys, monthPeriod, financialYearPeriod, type Period } from "@/lib/accounts/period";
 import { currentFinancialYearKey } from "@/lib/accounts/invoice-number";
-import type { Sale } from "@/lib/accounts/types";
+import type { Sale, Expense } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -30,13 +31,15 @@ function Row({ label, value, bold = false, indent = false }: { label: string; va
 
 export function PnlClient() {
   const [sales, setSales] = React.useState<Sale[]>([]);
+  const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [periodMode, setPeriodMode] = React.useState<"month" | "fy">("month");
   const [monthKey, setMonthKey] = React.useState(currentMonthKey());
 
   React.useEffect(() => subscribeToSales(setSales), []);
+  React.useEffect(() => subscribeToExpenses(setExpenses), []);
 
   const period: Period = periodMode === "fy" ? financialYearPeriod() : monthPeriod(monthKey);
-  const pnl = calcProfitAndLoss(sales, period);
+  const pnl = calcProfitAndLoss(sales, expenses, period);
   const monthOptions = lastMonthKeys(12).map((key) => ({ key, label: monthPeriod(key).label }));
 
   const handleExport = () => {
@@ -45,6 +48,10 @@ export function PnlClient() {
       { Line: "Cost of Goods Sold", Amount: -pnl.cogs },
       { Line: "Gross Profit", Amount: pnl.grossProfit },
       { Line: "Gross Margin %", Amount: pnl.grossMarginPercent },
+      ...pnl.otherIncomeByCategory.map((c) => ({ Line: `Other Income: ${c.category}`, Amount: c.amount })),
+      { Line: "Total Other Income", Amount: pnl.otherIncome },
+      ...pnl.expensesByCategory.map((c) => ({ Line: `Expense: ${c.category}`, Amount: -c.amount })),
+      { Line: "Total Expenses", Amount: -pnl.totalExpenses },
       { Line: "Net Profit", Amount: pnl.netProfit },
     ]);
   };
@@ -86,9 +93,8 @@ export function PnlClient() {
 
       <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
         <p>
-          GST is excluded (it&apos;s a pass-through liability, not revenue/expense). There&apos;s no separate
-          operating-expense tracking yet (rent, salaries, utilities), so Net Profit equals Gross Profit for now —
-          have your CA confirm before treating this as final.
+          GST is excluded (it&apos;s a pass-through liability, not revenue/expense). Confirm with your CA before
+          treating this as final.
         </p>
       </div>
 
@@ -97,6 +103,14 @@ export function PnlClient() {
         <Row label="Less: Cost of Goods Sold" value={`(${inr.format(pnl.cogs)})`} indent />
         <Row label="Gross Profit" value={inr.format(pnl.grossProfit)} bold />
         <Row label="Gross Margin %" value={`${pnl.grossMarginPercent}%`} />
+
+        {pnl.otherIncomeByCategory.map((c) => (
+          <Row key={c.category} label={`Add: ${c.category}`} value={inr.format(c.amount)} indent />
+        ))}
+        {pnl.expensesByCategory.map((c) => (
+          <Row key={c.category} label={`Less: ${c.category}`} value={`(${inr.format(c.amount)})`} indent />
+        ))}
+
         <Row label="Net Profit" value={inr.format(pnl.netProfit)} bold />
       </div>
     </div>

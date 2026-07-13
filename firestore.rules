@@ -55,6 +55,11 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // Day-to-day expenses and other income — not tied to a purchase/sales bill.
+    match /expenses/{expenseId} {
+      allow read, write: if isStaff();
+    }
+
     // Log of every reminder email sent (or attempted) — written by the
     // server-side send API using the Admin SDK, but readable here so the UI
     // can show history.

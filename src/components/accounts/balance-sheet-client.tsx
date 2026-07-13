@@ -7,9 +7,10 @@ import { subscribeToItems } from "@/lib/accounts/items";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPayments } from "@/lib/accounts/payments";
+import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { buildGeneralLedger } from "@/lib/accounts/ledger";
 import { computeStockSummary } from "@/lib/accounts/stock";
-import type { Party, Item, Purchase, Sale, Payment } from "@/lib/accounts/types";
+import type { Party, Item, Purchase, Sale, Payment, Expense } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -47,14 +48,16 @@ export function BalanceSheetClient() {
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [expenses, setExpenses] = React.useState<Expense[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToItems(setItems), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToPayments(setPayments), []);
+  React.useEffect(() => subscribeToExpenses(setExpenses), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses);
   const stockSummary = computeStockSummary(items, purchases, sales);
 
   const find = (name: string) => ledger.find((a) => a.name === name);
@@ -70,6 +73,17 @@ export function BalanceSheetClient() {
   const salesAmt = -(find("Sales")?.balance ?? 0);
   const roundOff = find("Round Off")?.balance ?? 0; // Dr-positive; negative means net credit (income)
 
+  // Day-to-day expense/income entries post to dynamic, user-named ledger
+  // accounts (one per category) rather than a single fixed one — so these
+  // sum every "expense"/"income" account except Purchases/Sales, which are
+  // already counted above.
+  const otherExpenseTotal = round2(
+    ledger.filter((a) => a.type === "expense" && a.name !== "Purchases" && a.name !== "Round Off").reduce((s, a) => s + a.balance, 0)
+  );
+  const otherIncomeTotal = round2(
+    ledger.filter((a) => a.type === "income" && a.name !== "Sales").reduce((s, a) => s - a.balance, 0)
+  );
+
   const debtors = ledger.filter((a) => a.type === "party" && a.balance > 0);
   const creditors = ledger.filter((a) => a.type === "party" && a.balance < 0);
   const totalDebtors = round2(debtors.reduce((s, a) => s + a.balance, 0));
@@ -80,7 +94,7 @@ export function BalanceSheetClient() {
 
   // Trading-account adjustment: unsold inventory isn't an expense yet.
   const cogs = round2(purchasesAmt + openingStockValue - closingStockValue);
-  const netProfit = round2(salesAmt - cogs - roundOff);
+  const netProfit = round2(salesAmt - cogs - roundOff + otherIncomeTotal - otherExpenseTotal);
 
   const assetRows = [
     { label: "Bank", amount: bank },

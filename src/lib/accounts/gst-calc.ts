@@ -94,6 +94,29 @@ export function derivePaymentStatus(grandTotal: number, amountPaid: number): "un
   return "partial";
 }
 
+export type ExpenseTax = {
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  grandTotal: number;
+};
+
+// Day-to-day expenses/income are almost always with local (intra-state)
+// vendors, so this always splits CGST+SGST rather than asking for a formal
+// place of supply the way bills do.
+export function calcExpenseTax(amount: number, gstRate: number, gstApplicable: boolean): ExpenseTax {
+  const taxableValue = round2(amount);
+  if (!gstApplicable) {
+    return { taxableValue, cgst: 0, sgst: 0, igst: 0, totalTax: 0, grandTotal: taxableValue };
+  }
+  const cgst = round2((taxableValue * gstRate) / 2 / 100);
+  const sgst = round2((taxableValue * gstRate) / 2 / 100);
+  const totalTax = round2(cgst + sgst);
+  return { taxableValue, cgst, sgst, igst: 0, totalTax, grandTotal: round2(taxableValue + totalTax) };
+}
+
 export function calcLineMargin(quantity: number, rate: number, costPrice: number): number {
   return round2((rate - costPrice) * quantity);
 }

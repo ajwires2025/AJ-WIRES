@@ -11,11 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { subscribeToPayments } from "@/lib/accounts/payments";
+import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { calcCashFlow } from "@/lib/accounts/cashflow";
 import { downloadCsv } from "@/lib/accounts/csv";
 import { currentMonthKey, lastMonthKeys, monthPeriod, financialYearPeriod, type Period } from "@/lib/accounts/period";
 import { currentFinancialYearKey } from "@/lib/accounts/invoice-number";
-import type { Payment } from "@/lib/accounts/types";
+import type { Payment, Expense } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -30,13 +31,15 @@ function Row({ label, value, bold = false }: { label: string; value: string; bol
 
 export function CashFlowClient() {
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [periodMode, setPeriodMode] = React.useState<"month" | "fy">("month");
   const [monthKey, setMonthKey] = React.useState(currentMonthKey());
 
   React.useEffect(() => subscribeToPayments(setPayments), []);
+  React.useEffect(() => subscribeToExpenses(setExpenses), []);
 
   const period: Period = periodMode === "fy" ? financialYearPeriod() : monthPeriod(monthKey);
-  const cf = calcCashFlow(payments, period);
+  const cf = calcCashFlow(payments, expenses, period);
   const monthOptions = lastMonthKeys(12).map((key) => ({ key, label: monthPeriod(key).label }));
 
   const handleExport = () => {
@@ -85,8 +88,8 @@ export function CashFlowClient() {
       </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
-        Based on recorded payments only — this is money in vs. money out through this system, not a bank
-        reconciliation against your actual bank statement.
+        Based on recorded payments and expense/income entries — this is money in vs. money out through this
+        system, not a bank reconciliation against your actual bank statement.
       </p>
 
       <div className="mt-6 max-w-xl rounded-xl border border-border bg-card p-6">

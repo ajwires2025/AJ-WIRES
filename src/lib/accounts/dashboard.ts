@@ -1,4 +1,4 @@
-import type { Purchase, Sale, Payment } from "@/lib/accounts/types";
+import type { Purchase, Sale, Payment, Expense } from "@/lib/accounts/types";
 import { inPeriod, monthPeriod, type Period } from "@/lib/accounts/period";
 
 function round2(n: number): number {
@@ -9,6 +9,7 @@ export type DashboardSummary = {
   totalSales: number;
   totalPurchases: number;
   grossProfit: number;
+  netProfit: number;
   marginPercent: number;
   outputGst: number;
   inputGst: number;
@@ -25,26 +26,38 @@ export function calcDashboardSummary(
   sales: Sale[],
   purchases: Purchase[],
   payments: Payment[],
+  expenses: Expense[],
   period: Period
 ): DashboardSummary {
   const salesInPeriod = sales.filter((s) => inPeriod(s.invoiceDate, period));
   const purchasesInPeriod = purchases.filter((p) => inPeriod(p.billDate, period));
   const paymentsInPeriod = payments.filter((p) => inPeriod(p.paymentDate, period));
+  const expensesInPeriod = expenses.filter((e) => inPeriod(e.date, period));
 
   const totalSales = round2(salesInPeriod.reduce((sum, s) => sum + s.taxableValue, 0));
   const totalPurchases = round2(purchasesInPeriod.reduce((sum, p) => sum + p.taxableValue, 0));
   const grossProfit = round2(salesInPeriod.reduce((sum, s) => sum + s.grossProfit, 0));
   const marginPercent = totalSales > 0 ? round2((grossProfit / totalSales) * 100) : 0;
 
+  const otherIncome = round2(
+    expensesInPeriod.filter((e) => e.direction === "income").reduce((sum, e) => sum + e.taxableValue, 0)
+  );
+  const otherExpenses = round2(
+    expensesInPeriod.filter((e) => e.direction === "expense").reduce((sum, e) => sum + e.taxableValue, 0)
+  );
+  const netProfit = round2(grossProfit + otherIncome - otherExpenses);
+
   const outputGst = round2(salesInPeriod.reduce((sum, s) => sum + s.totalTax, 0));
   const inputGst = round2(purchasesInPeriod.reduce((sum, p) => sum + p.totalTax, 0));
   const netGst = round2(outputGst - inputGst);
 
   const cashReceived = round2(
-    paymentsInPeriod.filter((p) => p.direction === "received").reduce((sum, p) => sum + p.amount, 0)
+    paymentsInPeriod.filter((p) => p.direction === "received").reduce((sum, p) => sum + p.amount, 0) +
+      expensesInPeriod.filter((e) => e.direction === "income").reduce((sum, e) => sum + e.grandTotal, 0)
   );
   const cashPaid = round2(
-    paymentsInPeriod.filter((p) => p.direction === "paid").reduce((sum, p) => sum + p.amount, 0)
+    paymentsInPeriod.filter((p) => p.direction === "paid").reduce((sum, p) => sum + p.amount, 0) +
+      expensesInPeriod.filter((e) => e.direction === "expense").reduce((sum, e) => sum + e.grandTotal, 0)
   );
 
   const totalReceivables = round2(
@@ -58,6 +71,7 @@ export function calcDashboardSummary(
     totalSales,
     totalPurchases,
     grossProfit,
+    netProfit,
     marginPercent,
     outputGst,
     inputGst,
