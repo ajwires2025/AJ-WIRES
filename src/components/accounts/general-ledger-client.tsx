@@ -17,8 +17,10 @@ import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPayments } from "@/lib/accounts/payments";
 import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { subscribeToJournalVouchers } from "@/lib/accounts/journal";
+import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
+import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
 import { buildGeneralLedger, type LedgerAccountType } from "@/lib/accounts/ledger";
-import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -45,18 +47,22 @@ export function GeneralLedgerClient() {
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [journalVouchers, setJournalVouchers] = React.useState<JournalVoucher[]>([]);
+  const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
+  const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
   const [search, setSearch] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState<"all" | LedgerAccountType>("all");
   const [expanded, setExpanded] = React.useState<string | null>(null);
 
   React.useEffect(() => subscribeToExpenses(setExpenses), []);
   React.useEffect(() => subscribeToJournalVouchers(setJournalVouchers), []);
+  React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
+  React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToPayments(setPayments), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes);
   const filtered = ledger.filter((acc) => {
     const matchesType = typeFilter === "all" || acc.type === typeFilter;
     const matchesSearch = acc.name.toLowerCase().includes(search.trim().toLowerCase());

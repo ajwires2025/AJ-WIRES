@@ -12,8 +12,14 @@ export function currentFinancialYearKey(date: Date = new Date()): string {
 
 // Sequential per financial year, no gaps, max 16 chars, format AJW/2026-27/0001.
 export async function getNextInvoiceNumber(date: Date = new Date()): Promise<string> {
+  return getNextNumber("sales", "AJW", date);
+}
+
+// Same sequential-per-FY mechanism, reusable for any document series (credit
+// notes, debit notes, ...) — each gets its own counter and prefix.
+export async function getNextNumber(series: string, prefix: string, date: Date = new Date()): Promise<string> {
   const fyKey = currentFinancialYearKey(date);
-  const counterRef = doc(db, "counters", `sales-${fyKey}`);
+  const counterRef = doc(db, "counters", `${series}-${fyKey}`);
 
   const nextSeq = await runTransaction(db, async (tx) => {
     const snap = await tx.get(counterRef);
@@ -22,5 +28,5 @@ export async function getNextInvoiceNumber(date: Date = new Date()): Promise<str
     return current;
   });
 
-  return `AJW/${fyKey}/${String(nextSeq).padStart(4, "0")}`;
+  return `${prefix}/${fyKey}/${String(nextSeq).padStart(4, "0")}`;
 }

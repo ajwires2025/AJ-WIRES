@@ -1,4 +1,4 @@
-import type { Item, Purchase, Sale } from "@/lib/accounts/types";
+import type { Item, Purchase, Sale, CreditNote, DebitNote } from "@/lib/accounts/types";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -7,7 +7,7 @@ function round3(n: number): number {
   return Math.round((n + Number.EPSILON) * 1000) / 1000;
 }
 
-export type StockMovementType = "opening" | "purchase" | "sale";
+export type StockMovementType = "opening" | "purchase" | "sale" | "sales_return" | "purchase_return";
 
 export type StockMovement = {
   date: string;
@@ -22,11 +22,18 @@ export type StockMovement = {
   avgCost: number;
 };
 
-// Weighted-average perpetual inventory: every purchase line moves stock in
-// at its rate; every sale line moves stock out valued at the running
-// average cost (not the sale rate) so margin/COGS stay consistent with the
-// sales module. Opening stock is valued at the item's current cost price.
-export function computeItemStockLedger(item: Item, purchases: Purchase[], sales: Sale[]): StockMovement[] {
+// Weighted-average perpetual inventory: every purchase line (and sales
+// return) moves stock in; every sale line (and purchase return) moves stock
+// out. Sales returns come back in at the running average cost at that point
+// (not the original sale rate) — consistent with weighted-average
+// convention, though not a perfect trace back to the exact unit sold.
+export function computeItemStockLedger(
+  item: Item,
+  purchases: Purchase[],
+  sales: Sale[],
+  creditNotes: CreditNote[] = [],
+  debitNotes: DebitNote[] = []
+): StockMovement[] {
   const events: { date: string; type: StockMovementType; refNumber: string; partyName: string; qty: number; rate: number }[] = [];
 
   for (const purchase of purchases) {
@@ -51,6 +58,34 @@ export function computeItemStockLedger(item: Item, purchases: Purchase[], sales:
         type: "sale",
         refNumber: sale.invoiceNumber,
         partyName: sale.customerName,
+        qty: -line.quantity,
+        rate: line.rate,
+      });
+    }
+  }
+
+  for (const cn of creditNotes) {
+    for (const line of cn.items) {
+      if (line.itemId !== item.id) continue;
+      events.push({
+        date: cn.noteDate,
+        type: "sales_return",
+        refNumber: cn.noteNumber,
+        partyName: cn.customerName,
+        qty: line.quantity,
+        rate: line.rate,
+      });
+    }
+  }
+
+  for (const dn of debitNotes) {
+    for (const line of dn.items) {
+      if (line.itemId !== item.id) continue;
+      events.push({
+        date: dn.noteDate,
+        type: "purchase_return",
+        refNumber: dn.noteNumber,
+        partyName: dn.supplierName,
         qty: -line.quantity,
         rate: line.rate,
       });
@@ -84,7 +119,11 @@ export function computeItemStockLedger(item: Item, purchases: Purchase[], sales:
   for (const event of events) {
     const avgCostBefore = balanceQty > 0 ? balanceValue / balanceQty : 0;
 
-    if (event.qty >= 0) {
+    if (event.type === "sales_return") {
+      // Comes back in at the running average cost, not the original sale rate.
+      balanceValue = round2(balanceValue + event.qty * avgCostBefore);
+      balanceQty = round3(balanceQty + event.qty);
+    } else if (event.qty >= 0) {
       balanceValue = round2(balanceValue + event.qty * event.rate);
       balanceQty = round3(balanceQty + event.qty);
     } else {
@@ -123,12 +162,18 @@ export type StockSummaryRow = {
   closingValue: number;
 };
 
-export function computeStockSummary(items: Item[], purchases: Purchase[], sales: Sale[]): StockSummaryRow[] {
+export function computeStockSummary(
+  items: Item[],
+  purchases: Purchase[],
+  sales: Sale[],
+  creditNotes: CreditNote[] = [],
+  debitNotes: DebitNote[] = []
+): StockSummaryRow[] {
   return items.map((item) => {
-    const ledger = computeItemStockLedger(item, purchases, sales);
+    const ledger = computeItemStockLedger(item, purchases, sales, creditNotes, debitNotes);
     const last = ledger[ledger.length - 1];
-    const totalIn = ledger.reduce((sum, m) => sum + (m.type === "purchase" ? m.qtyIn : 0), 0);
-    const totalOut = ledger.reduce((sum, m) => sum + (m.type === "sale" ? m.qtyOut : 0), 0);
+    const totalIn = ledger.reduce((sum, m) => sum + (m.type === "purchase" || m.type === "sales_return" ? m.qtyIn : 0), 0);
+    const totalOut = ledger.reduce((sum, m) => sum + (m.type === "sale" || m.type === "purchase_return" ? m.qtyOut : 0), 0);
 
     return {
       itemId: item.id,

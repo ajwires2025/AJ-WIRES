@@ -28,8 +28,11 @@ import {
 import { subscribeToParties } from "@/lib/accounts/parties";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToSales } from "@/lib/accounts/sales";
+import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
+import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
 import { createPayment } from "@/lib/accounts/payments";
-import { PAYMENT_METHOD_LABELS, type Party, type Purchase, type Sale } from "@/lib/accounts/types";
+import { netSaleOutstanding, netPurchaseOutstanding } from "@/lib/accounts/outstanding";
+import { PAYMENT_METHOD_LABELS, type Party, type Purchase, type Sale, type CreditNote, type DebitNote } from "@/lib/accounts/types";
 import type { SessionUser } from "@/lib/firebase/session";
 
 const paymentSchema = z.object({
@@ -59,10 +62,14 @@ export function PaymentFormDialog({
   const [parties, setParties] = React.useState<Party[]>([]);
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [sales, setSales] = React.useState<Sale[]>([]);
+  const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
+  const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
   React.useEffect(() => subscribeToSales(setSales), []);
+  React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
+  React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
 
   const {
     register,
@@ -108,23 +115,23 @@ export function PaymentFormDialog({
     direction === "received" ? p.type === "customer" || p.type === "both" : p.type === "supplier" || p.type === "both"
   );
 
+  const netOutstanding = (bill: Sale | Purchase) =>
+    "amountReceived" in bill ? netSaleOutstanding(bill, creditNotes) : netPurchaseOutstanding(bill, debitNotes);
+
   const outstandingBills =
     direction === "received"
-      ? sales.filter((s) => s.customerId === partyId && s.paymentStatus !== "paid")
-      : purchases.filter((p) => p.supplierId === partyId && p.paymentStatus !== "paid");
+      ? sales.filter((s) => s.customerId === partyId && netSaleOutstanding(s, creditNotes) > 0.01)
+      : purchases.filter((p) => p.supplierId === partyId && netPurchaseOutstanding(p, debitNotes) > 0.01);
 
   const selectedBillId = watch("linkedId");
   const selectedBill = outstandingBills.find((b) => b.id === selectedBillId);
-  const remainingBalance = selectedBill
-    ? selectedBill.grandTotal - ("amountReceived" in selectedBill ? selectedBill.amountReceived : selectedBill.amountPaid)
-    : 0;
+  const remainingBalance = selectedBill ? netOutstanding(selectedBill) : 0;
 
   const handleBillChange = (id: string) => {
     setValue("linkedId", id);
     const bill = outstandingBills.find((b) => b.id === id);
     if (bill) {
-      const paidSoFar = "amountReceived" in bill ? bill.amountReceived : bill.amountPaid;
-      setValue("amount", Math.round((bill.grandTotal - paidSoFar) * 100) / 100);
+      setValue("amount", netOutstanding(bill));
     }
   };
 
@@ -236,10 +243,9 @@ export function PaymentFormDialog({
                     <SelectContent>
                       {outstandingBills.map((b) => {
                         const number = "invoiceNumber" in b ? b.invoiceNumber : b.billNumber;
-                        const paid = "amountReceived" in b ? b.amountReceived : b.amountPaid;
                         return (
                           <SelectItem key={b.id} value={b.id}>
-                            {number} — outstanding {inr.format(b.grandTotal - paid)}
+                            {number} — outstanding {inr.format(netOutstanding(b))}
                           </SelectItem>
                         );
                       })}

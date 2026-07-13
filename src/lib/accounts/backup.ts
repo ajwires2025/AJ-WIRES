@@ -1,7 +1,7 @@
 import { collection, getDocs } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import { db } from "@/lib/firebase/client";
-import type { Purchase, Sale, JournalVoucher } from "@/lib/accounts/types";
+import type { Purchase, Sale, JournalVoucher, CreditNote, DebitNote } from "@/lib/accounts/types";
 
 async function fetchAll<T>(name: string): Promise<T[]> {
   const snap = await getDocs(collection(db, name));
@@ -38,11 +38,33 @@ function flattenJournalLines(vouchers: JournalVoucher[]) {
   );
 }
 
+function flattenCreditNoteItems(notes: CreditNote[]) {
+  return notes.flatMap((n) =>
+    n.items.map((line) => ({
+      noteNumber: n.noteNumber,
+      customerName: n.customerName,
+      linkedInvoiceNumber: n.linkedInvoiceNumber,
+      ...line,
+    }))
+  );
+}
+
+function flattenDebitNoteItems(notes: DebitNote[]) {
+  return notes.flatMap((n) =>
+    n.items.map((line) => ({
+      noteNumber: n.noteNumber,
+      supplierName: n.supplierName,
+      linkedBillNumber: n.linkedBillNumber,
+      ...line,
+    }))
+  );
+}
+
 // A flat, one-file backup of every collection — meant as a safety net /
 // hand-off to the CA, not a live sync target. Line items are flattened into
 // their own sheets since a spreadsheet can't hold nested arrays.
 export async function exportAllDataToExcel(): Promise<void> {
-  const [parties, items, purchases, sales, payments, expenses, journalVouchers, remindersLog] = await Promise.all([
+  const [parties, items, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, remindersLog] = await Promise.all([
     fetchAll("parties"),
     fetchAll("items"),
     fetchAll<Purchase>("purchases"),
@@ -50,6 +72,8 @@ export async function exportAllDataToExcel(): Promise<void> {
     fetchAll("payments"),
     fetchAll("expenses"),
     fetchAll<JournalVoucher>("journalVouchers"),
+    fetchAll<CreditNote>("creditNotes"),
+    fetchAll<DebitNote>("debitNotes"),
     fetchAll("remindersLog"),
   ]);
 
@@ -72,6 +96,10 @@ export async function exportAllDataToExcel(): Promise<void> {
   addSheet("Expenses & Other Income", expenses);
   addSheet("Journal Vouchers", journalVouchers.map(({ lines: _lines, ...rest }) => rest));
   addSheet("Journal Voucher Lines", flattenJournalLines(journalVouchers));
+  addSheet("Credit Notes", creditNotes.map(({ items: _items, ...rest }) => rest));
+  addSheet("Credit Note Items", flattenCreditNoteItems(creditNotes));
+  addSheet("Debit Notes", debitNotes.map(({ items: _items, ...rest }) => rest));
+  addSheet("Debit Note Items", flattenDebitNoteItems(debitNotes));
   addSheet("Reminders Log", remindersLog);
 
   const dateStamp = new Date().toISOString().slice(0, 10);

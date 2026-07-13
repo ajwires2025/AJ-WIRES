@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToParties } from "@/lib/accounts/parties";
+import { subscribeToCreditNotes, creditNotedTotal } from "@/lib/accounts/credit-notes";
+import { subscribeToDebitNotes, debitNotedTotal } from "@/lib/accounts/debit-notes";
 import { daysOverdue, agingBucket } from "@/lib/accounts/aging";
 import { downloadCsv } from "@/lib/accounts/csv";
 import { SendReminderDialog } from "@/components/accounts/send-reminder-dialog";
-import type { Sale, Purchase, Party, AgingBucket, AgingRow } from "@/lib/accounts/types";
+import type { Sale, Purchase, Party, AgingBucket, AgingRow, CreditNote, DebitNote } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const BUCKETS: AgingBucket[] = ["0-30", "31-60", "61-90", "90+"];
@@ -176,18 +178,22 @@ export function AgingClient() {
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [parties, setParties] = React.useState<Party[]>([]);
+  const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
+  const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
   const [reminderRow, setReminderRow] = React.useState<AgingRow | null>(null);
 
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
   React.useEffect(() => subscribeToParties(setParties), []);
+  React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
+  React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
 
   const emailById = new Map(parties.map((p) => [p.id, p.email]));
 
   const receivables: AgingRow[] = sales
-    .filter((s) => s.paymentStatus !== "paid")
     .map((s) => {
       const days = daysOverdue(s.dueDate);
+      const outstanding = Math.round((s.grandTotal - s.amountReceived - creditNotedTotal(creditNotes, s.id)) * 100) / 100;
       return {
         id: s.id,
         number: s.invoiceNumber,
@@ -196,14 +202,15 @@ export function AgingClient() {
         dueDate: s.dueDate,
         daysOverdue: days,
         bucket: agingBucket(days),
-        outstanding: s.grandTotal - s.amountReceived,
+        outstanding,
       };
-    });
+    })
+    .filter((r) => r.outstanding > 0.01);
 
   const payables: AgingRow[] = purchases
-    .filter((p) => p.paymentStatus !== "paid")
     .map((p) => {
       const days = daysOverdue(p.dueDate);
+      const outstanding = Math.round((p.grandTotal - p.amountPaid - debitNotedTotal(debitNotes, p.id)) * 100) / 100;
       return {
         id: p.id,
         number: p.billNumber,
@@ -212,9 +219,10 @@ export function AgingClient() {
         dueDate: p.dueDate,
         daysOverdue: days,
         bucket: agingBucket(days),
-        outstanding: p.grandTotal - p.amountPaid,
+        outstanding,
       };
-    });
+    })
+    .filter((r) => r.outstanding > 0.01);
 
   return (
     <div>

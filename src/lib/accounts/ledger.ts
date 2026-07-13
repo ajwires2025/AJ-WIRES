@@ -1,4 +1,4 @@
-import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, LedgerAccountType } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, LedgerAccountType } from "@/lib/accounts/types";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -8,7 +8,7 @@ export type { LedgerAccountType };
 
 export type LedgerEntry = {
   date: string;
-  voucherType: "Purchase" | "Sales" | "Payment" | "Opening" | "Journal";
+  voucherType: "Purchase" | "Sales" | "Payment" | "Opening" | "Journal" | "Credit Note" | "Debit Note";
   refNumber: string;
   narration: string;
   debit: number;
@@ -68,7 +68,9 @@ export function buildGeneralLedger(
   sales: Sale[],
   payments: Payment[],
   expenses: Expense[] = [],
-  journalVouchers: JournalVoucher[] = []
+  journalVouchers: JournalVoucher[] = [],
+  creditNotes: CreditNote[] = [],
+  debitNotes: DebitNote[] = []
 ): LedgerAccount[] {
   const ledgers = new Map<string, LedgerAccount>();
   for (const acc of FIXED_ACCOUNTS) {
@@ -147,6 +149,26 @@ export function buildGeneralLedger(
         post(ledgers, line.accountName, line.accountType, { date: jv.date, voucherType: "Journal", refNumber: jv.id.slice(0, 6), narration: jv.narration, debit: 0, credit: line.credit });
       }
     }
+  }
+
+  // Credit/debit notes reverse a slice of the original sale/purchase entry —
+  // the original invoice/bill entry is left untouched for audit purposes.
+  for (const cn of creditNotes) {
+    const narration = `Credit note against ${cn.linkedInvoiceNumber} (${cn.reason})`;
+    post(ledgers, cn.customerName, "party", { date: cn.noteDate, voucherType: "Credit Note", refNumber: cn.noteNumber, narration, debit: 0, credit: cn.grandTotal });
+    if (cn.taxableValue) post(ledgers, "Sales", "income", { date: cn.noteDate, voucherType: "Credit Note", refNumber: cn.noteNumber, narration, debit: cn.taxableValue, credit: 0 });
+    if (cn.cgst) post(ledgers, "Output CGST", "liability", { date: cn.noteDate, voucherType: "Credit Note", refNumber: cn.noteNumber, narration, debit: cn.cgst, credit: 0 });
+    if (cn.sgst) post(ledgers, "Output SGST", "liability", { date: cn.noteDate, voucherType: "Credit Note", refNumber: cn.noteNumber, narration, debit: cn.sgst, credit: 0 });
+    if (cn.igst) post(ledgers, "Output IGST", "liability", { date: cn.noteDate, voucherType: "Credit Note", refNumber: cn.noteNumber, narration, debit: cn.igst, credit: 0 });
+  }
+
+  for (const dn of debitNotes) {
+    const narration = `Debit note against ${dn.linkedBillNumber} (${dn.reason})`;
+    post(ledgers, dn.supplierName, "party", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: dn.grandTotal, credit: 0 });
+    if (dn.taxableValue) post(ledgers, "Purchases", "expense", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: 0, credit: dn.taxableValue });
+    if (dn.cgst) post(ledgers, "Input CGST", "asset", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: 0, credit: dn.cgst });
+    if (dn.sgst) post(ledgers, "Input SGST", "asset", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: 0, credit: dn.sgst });
+    if (dn.igst) post(ledgers, "Input IGST", "asset", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: 0, credit: dn.igst });
   }
 
   return Array.from(ledgers.values())

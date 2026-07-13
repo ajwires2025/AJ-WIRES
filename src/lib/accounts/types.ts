@@ -138,6 +138,58 @@ export type Sale = {
 
 export type SaleInput = Omit<Sale, "id" | "createdBy" | "createdAt">;
 
+// Sales return / post-invoice reduction issued to a customer. Does not
+// modify the original invoice (keeps its numbering and figures intact for
+// audit purposes) — the linked invoice's *net outstanding* is reduced by
+// this note's grand total wherever outstanding balances are computed.
+export type CreditNote = {
+  id: string;
+  noteNumber: string;
+  noteDate: string;
+  customerId: string;
+  customerName: string;
+  linkedSaleId: string;
+  linkedInvoiceNumber: string;
+  reason: string;
+  items: BillItemLine[];
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  grandTotal: number;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type CreditNoteInput = Omit<CreditNote, "id" | "createdBy" | "createdAt">;
+
+// Purchase return / post-bill reduction issued to a supplier. Mirrors
+// CreditNote for the purchase side.
+export type DebitNote = {
+  id: string;
+  noteNumber: string;
+  noteDate: string;
+  supplierId: string;
+  supplierName: string;
+  linkedPurchaseId: string;
+  linkedBillNumber: string;
+  reason: string;
+  items: BillItemLine[];
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  grandTotal: number;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type DebitNoteInput = Omit<DebitNote, "id" | "createdBy" | "createdAt">;
+
 export type PaymentDirection = "received" | "paid";
 export type PaymentMethod = "bank" | "cash" | "upi" | "cheque";
 export type LinkedBillType = "sale" | "purchase";

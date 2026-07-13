@@ -24,6 +24,8 @@ import {
   CheckCircle2,
   History,
   Settings,
+  FileMinus,
+  FilePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -50,6 +52,8 @@ const primaryNavItems = [
   { href: "/accounts/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/accounts/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/accounts/sales", label: "Sales", icon: Receipt },
+  { href: "/accounts/credit-notes", label: "Credit Notes", icon: FileMinus },
+  { href: "/accounts/debit-notes", label: "Debit Notes", icon: FilePlus },
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
   { href: "/accounts/expenses", label: "Expenses", icon: ReceiptText },
   { href: "/accounts/journal-vouchers", label: "Journal Vouchers", icon: BookOpen },

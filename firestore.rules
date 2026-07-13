@@ -66,6 +66,16 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // Sales returns / invoice reductions issued to customers.
+    match /creditNotes/{noteId} {
+      allow read, write: if isStaff();
+    }
+
+    // Purchase returns / bill reductions issued to suppliers.
+    match /debitNotes/{noteId} {
+      allow read, write: if isStaff();
+    }
+
     // Log of every reminder email sent (or attempted) — written by the
     // server-side send API using the Admin SDK, but readable here so the UI
     // can show history.
