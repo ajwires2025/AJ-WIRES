@@ -1,14 +1,14 @@
-import type { Party, Purchase, Sale, Payment, Expense } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, LedgerAccountType } from "@/lib/accounts/types";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-export type LedgerAccountType = "asset" | "liability" | "income" | "expense" | "party";
+export type { LedgerAccountType };
 
 export type LedgerEntry = {
   date: string;
-  voucherType: "Purchase" | "Sales" | "Payment" | "Opening";
+  voucherType: "Purchase" | "Sales" | "Payment" | "Opening" | "Journal";
   refNumber: string;
   narration: string;
   debit: number;
@@ -67,7 +67,8 @@ export function buildGeneralLedger(
   purchases: Purchase[],
   sales: Sale[],
   payments: Payment[],
-  expenses: Expense[] = []
+  expenses: Expense[] = [],
+  journalVouchers: JournalVoucher[] = []
 ): LedgerAccount[] {
   const ledgers = new Map<string, LedgerAccount>();
   for (const acc of FIXED_ACCOUNTS) {
@@ -134,6 +135,17 @@ export function buildGeneralLedger(
       if (exp.cgst) post(ledgers, "Output CGST", "liability", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.cgst });
       if (exp.sgst) post(ledgers, "Output SGST", "liability", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.sgst });
       if (exp.igst) post(ledgers, "Output IGST", "liability", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.igst });
+    }
+  }
+
+  for (const jv of journalVouchers) {
+    for (const line of jv.lines) {
+      if (line.debit) {
+        post(ledgers, line.accountName, line.accountType, { date: jv.date, voucherType: "Journal", refNumber: jv.id.slice(0, 6), narration: jv.narration, debit: line.debit, credit: 0 });
+      }
+      if (line.credit) {
+        post(ledgers, line.accountName, line.accountType, { date: jv.date, voucherType: "Journal", refNumber: jv.id.slice(0, 6), narration: jv.narration, debit: 0, credit: line.credit });
+      }
     }
   }
 

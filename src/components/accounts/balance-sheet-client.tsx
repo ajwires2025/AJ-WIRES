@@ -8,9 +8,10 @@ import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToPayments } from "@/lib/accounts/payments";
 import { subscribeToExpenses } from "@/lib/accounts/expenses";
+import { subscribeToJournalVouchers } from "@/lib/accounts/journal";
 import { buildGeneralLedger } from "@/lib/accounts/ledger";
 import { computeStockSummary } from "@/lib/accounts/stock";
-import type { Party, Item, Purchase, Sale, Payment, Expense } from "@/lib/accounts/types";
+import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -49,6 +50,7 @@ export function BalanceSheetClient() {
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [expenses, setExpenses] = React.useState<Expense[]>([]);
+  const [journalVouchers, setJournalVouchers] = React.useState<JournalVoucher[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToItems(setItems), []);
@@ -56,8 +58,9 @@ export function BalanceSheetClient() {
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToPayments(setPayments), []);
   React.useEffect(() => subscribeToExpenses(setExpenses), []);
+  React.useEffect(() => subscribeToJournalVouchers(setJournalVouchers), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers);
   const stockSummary = computeStockSummary(items, purchases, sales);
 
   const find = (name: string) => ledger.find((a) => a.name === name);

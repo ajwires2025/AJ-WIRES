@@ -169,6 +169,28 @@ export type Payment = {
 
 export type PaymentInput = Omit<Payment, "id" | "createdBy" | "createdAt" | "reconciled">;
 
+export type LedgerAccountType = "asset" | "liability" | "income" | "expense" | "party";
+
+export type JournalLine = {
+  accountName: string;
+  accountType: LedgerAccountType;
+  debit: number;
+  credit: number;
+};
+
+export type JournalVoucher = {
+  id: string;
+  date: string;
+  narration: string;
+  lines: JournalLine[];
+  totalDebit: number;
+  totalCredit: number;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type JournalVoucherInput = Omit<JournalVoucher, "id" | "createdBy" | "createdAt">;
+
 export type ExpenseDirection = "expense" | "income";
 
 export type Expense = {

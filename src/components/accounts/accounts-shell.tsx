@@ -52,6 +52,7 @@ const primaryNavItems = [
   { href: "/accounts/sales", label: "Sales", icon: Receipt },
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
   { href: "/accounts/expenses", label: "Expenses", icon: ReceiptText },
+  { href: "/accounts/journal-vouchers", label: "Journal Vouchers", icon: BookOpen },
 ];
 
 const reportNavItems = [

@@ -1,7 +1,7 @@
 import { collection, getDocs } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import { db } from "@/lib/firebase/client";
-import type { Purchase, Sale } from "@/lib/accounts/types";
+import type { Purchase, Sale, JournalVoucher } from "@/lib/accounts/types";
 
 async function fetchAll<T>(name: string): Promise<T[]> {
   const snap = await getDocs(collection(db, name));
@@ -28,17 +28,28 @@ function flattenSaleItems(sales: Sale[]) {
   );
 }
 
+function flattenJournalLines(vouchers: JournalVoucher[]) {
+  return vouchers.flatMap((v) =>
+    v.lines.map((line) => ({
+      date: v.date,
+      narration: v.narration,
+      ...line,
+    }))
+  );
+}
+
 // A flat, one-file backup of every collection — meant as a safety net /
 // hand-off to the CA, not a live sync target. Line items are flattened into
 // their own sheets since a spreadsheet can't hold nested arrays.
 export async function exportAllDataToExcel(): Promise<void> {
-  const [parties, items, purchases, sales, payments, expenses, remindersLog] = await Promise.all([
+  const [parties, items, purchases, sales, payments, expenses, journalVouchers, remindersLog] = await Promise.all([
     fetchAll("parties"),
     fetchAll("items"),
     fetchAll<Purchase>("purchases"),
     fetchAll<Sale>("sales"),
     fetchAll("payments"),
     fetchAll("expenses"),
+    fetchAll<JournalVoucher>("journalVouchers"),
     fetchAll("remindersLog"),
   ]);
 
@@ -59,6 +70,8 @@ export async function exportAllDataToExcel(): Promise<void> {
   addSheet("Sale Line Items", flattenSaleItems(sales));
   addSheet("Payments", payments);
   addSheet("Expenses & Other Income", expenses);
+  addSheet("Journal Vouchers", journalVouchers.map(({ lines: _lines, ...rest }) => rest));
+  addSheet("Journal Voucher Lines", flattenJournalLines(journalVouchers));
   addSheet("Reminders Log", remindersLog);
 
   const dateStamp = new Date().toISOString().slice(0, 10);
