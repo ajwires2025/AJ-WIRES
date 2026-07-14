@@ -1,4 +1,4 @@
-import type { Purchase, Sale, Payment, Expense, FixedAsset } from "@/lib/accounts/types";
+import type { Purchase, Sale, Payment, Expense, FixedAsset, TdsChallan } from "@/lib/accounts/types";
 import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
 import { inPeriod, monthPeriod, type Period } from "@/lib/accounts/period";
 import { calcDepreciationForPeriod } from "@/lib/accounts/depreciation";
@@ -30,12 +30,14 @@ export function calcDashboardSummary(
   payments: Payment[],
   expenses: Expense[],
   fixedAssets: FixedAsset[] = [],
+  tdsChallans: TdsChallan[] = [],
   period: Period
 ): DashboardSummary {
   const salesInPeriod = sales.filter((s) => inPeriod(s.invoiceDate, period));
   const purchasesInPeriod = purchases.filter((p) => inPeriod(p.billDate, period));
   const paymentsInPeriod = payments.filter((p) => inPeriod(p.paymentDate, period));
   const expensesInPeriod = expenses.filter((e) => inPeriod(e.date, period));
+  const challansInPeriod = tdsChallans.filter((c) => inPeriod(c.date, period));
 
   const totalSales = round2(salesInPeriod.reduce((sum, s) => sum + s.taxableValue, 0));
   const totalPurchases = round2(purchasesInPeriod.reduce((sum, p) => sum + p.taxableValue, 0));
@@ -63,13 +65,18 @@ export function calcDashboardSummary(
     paymentsInPeriod.filter((p) => p.direction === "received").reduce((sum, p) => sum + p.amount, 0) +
       expensesInPeriod.filter((e) => e.direction === "income").reduce((sum, e) => sum + e.grandTotal, 0)
   );
+  // TDS withheld from a vendor doesn't leave the bank until deposited via a
+  // TdsChallan — count only netCashPaid now, and the challan deposit later.
   const cashPaid = round2(
     paymentsInPeriod.filter((p) => p.direction === "paid").reduce((sum, p) => sum + p.amount, 0) +
-      expensesInPeriod.filter((e) => e.direction === "expense").reduce((sum, e) => sum + e.grandTotal, 0)
+      expensesInPeriod.filter((e) => e.direction === "expense").reduce((sum, e) => sum + (e.grandTotal - (e.tdsAmount || 0)), 0) +
+      challansInPeriod.reduce((sum, c) => sum + c.amount, 0)
   );
 
+  // TDS the customer deducted is settled (they remitted it to the
+  // government on our behalf) — it's not still outstanding.
   const totalReceivables = round2(
-    sales.filter((s) => s.paymentStatus !== "paid").reduce((sum, s) => sum + (s.grandTotal - s.amountReceived), 0)
+    sales.filter((s) => s.paymentStatus !== "paid").reduce((sum, s) => sum + (s.grandTotal - s.amountReceived - (s.tdsAmount || 0)), 0)
   );
   const totalPayables = round2(
     purchases.filter((p) => p.paymentStatus !== "paid").reduce((sum, p) => sum + (p.grandTotal - p.amountPaid), 0)

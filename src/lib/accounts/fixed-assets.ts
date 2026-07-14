@@ -40,6 +40,9 @@ export async function createFixedAsset(
         igst: 0,
         totalTax: 0,
         grandTotal: input.purchaseCost,
+        tdsSection: "",
+        tdsRatePercent: 0,
+        tdsAmount: 0,
         notes: `Auto-recorded from Fixed Asset register.`,
       },
       createdBy

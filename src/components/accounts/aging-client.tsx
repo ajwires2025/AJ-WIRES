@@ -214,7 +214,7 @@ export function AgingClient({ user }: { user: SessionUser }) {
   const receivables: AgingRow[] = sales
     .map((s) => {
       const days = daysOverdue(s.dueDate);
-      const outstanding = Math.round((s.grandTotal - s.amountReceived - creditNotedTotal(creditNotes, s.id)) * 100) / 100;
+      const outstanding = Math.round((s.grandTotal - s.amountReceived - (s.tdsAmount || 0) - creditNotedTotal(creditNotes, s.id)) * 100) / 100;
       return {
         id: s.id,
         number: s.invoiceNumber,

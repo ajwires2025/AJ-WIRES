@@ -100,6 +100,11 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // TDS deposit challans (Form 281) — reduce the TDS Payable liability.
+    match /tdsChallans/{challanId} {
+      allow read, write: if isStaff();
+    }
+
     // Log of every reminder email sent (or attempted) — written by the
     // server-side send API using the Admin SDK, but readable here so the UI
     // can show history.

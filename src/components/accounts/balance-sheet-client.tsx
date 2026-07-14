@@ -13,11 +13,12 @@ import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
 import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
 import { subscribeToProductionVouchers } from "@/lib/accounts/production";
 import { subscribeToFixedAssets } from "@/lib/accounts/fixed-assets";
+import { subscribeToTdsChallans } from "@/lib/accounts/tds-challans";
 import { buildGeneralLedger } from "@/lib/accounts/ledger";
 import { computeStockSummary } from "@/lib/accounts/stock";
 import { netBlock, totalAccumulatedDepreciation } from "@/lib/accounts/depreciation";
 import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
-import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, ProductionVoucher, FixedAsset } from "@/lib/accounts/types";
+import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, ProductionVoucher, FixedAsset, TdsChallan } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -61,6 +62,7 @@ export function BalanceSheetClient() {
   const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
   const [productionVouchers, setProductionVouchers] = React.useState<ProductionVoucher[]>([]);
   const [fixedAssets, setFixedAssets] = React.useState<FixedAsset[]>([]);
+  const [tdsChallans, setTdsChallans] = React.useState<TdsChallan[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToItems(setItems), []);
@@ -73,8 +75,9 @@ export function BalanceSheetClient() {
   React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
   React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
   React.useEffect(() => subscribeToFixedAssets(setFixedAssets), []);
+  React.useEffect(() => subscribeToTdsChallans(setTdsChallans), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, tdsChallans);
   const stockSummary = computeStockSummary(items, purchases, sales, creditNotes, debitNotes, productionVouchers);
 
   const find = (name: string) => ledger.find((a) => a.name === name);
@@ -89,6 +92,8 @@ export function BalanceSheetClient() {
   const purchasesAmt = find("Purchases")?.balance ?? 0;
   const salesAmt = -(find("Sales")?.balance ?? 0);
   const roundOff = find("Round Off")?.balance ?? 0; // Dr-positive; negative means net credit (income)
+  const tdsPayable = -(find("TDS Payable")?.balance ?? 0);
+  const tdsReceivable = find("TDS Receivable")?.balance ?? 0;
 
   // Day-to-day expense/income entries post to dynamic, user-named ledger
   // accounts (one per category) rather than a single fixed one — so these
@@ -129,6 +134,7 @@ export function BalanceSheetClient() {
     { label: "Sundry Debtors (customers owe you)", amount: totalDebtors },
     { label: "Closing Stock (Inventory)", amount: closingStockValue },
     { label: "Fixed Assets (Net Block)", amount: netBlockValue },
+    { label: "TDS Receivable", amount: tdsReceivable },
   ].filter((r) => r.amount !== 0);
   const totalAssets = round2(assetRows.reduce((s, r) => s + r.amount, 0));
 
@@ -137,6 +143,7 @@ export function BalanceSheetClient() {
     { label: "Output SGST Payable", amount: outputSgst },
     ...(outputIgst ? [{ label: "Output IGST Payable", amount: outputIgst }] : []),
     { label: "Sundry Creditors (you owe suppliers)", amount: totalCreditors },
+    { label: "TDS Payable", amount: tdsPayable },
   ].filter((r) => r.amount !== 0);
   const totalLiabilities = round2(liabilityRows.reduce((s, r) => s + r.amount, 0));
 

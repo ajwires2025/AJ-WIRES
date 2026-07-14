@@ -30,6 +30,7 @@ import {
   FileSpreadsheet,
   FileSignature,
   ClipboardList,
+  Percent,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -72,6 +73,7 @@ const voucherNavItems = [
 const reportNavItems = [
   { href: "/accounts/pnl", label: "Profit & Loss", icon: FileText },
   { href: "/accounts/gst-summary", label: "GST Summary", icon: FileSpreadsheet },
+  { href: "/accounts/tds-summary", label: "TDS Summary", icon: Percent },
   { href: "/accounts/cash-flow", label: "Cash Flow", icon: Wallet },
   { href: "/accounts/aging", label: "Aging", icon: TrendingUp },
   { href: "/accounts/reconciliation", label: "Reconciliation", icon: CheckCircle2 },

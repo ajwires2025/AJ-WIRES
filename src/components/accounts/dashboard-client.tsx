@@ -41,6 +41,7 @@ import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToPayments } from "@/lib/accounts/payments";
 import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { subscribeToFixedAssets } from "@/lib/accounts/fixed-assets";
+import { subscribeToTdsChallans } from "@/lib/accounts/tds-challans";
 import {
   calcDashboardSummary,
   buildMonthlyTrend,
@@ -51,7 +52,7 @@ import { currentMonthKey, lastMonthKeys, monthPeriod, financialYearPeriod, type 
 import { currentFinancialYearKey } from "@/lib/accounts/invoice-number";
 import { OverdueAlertsPanel } from "@/components/accounts/overdue-alerts-panel";
 import { LowStockAlertsPanel } from "@/components/accounts/low-stock-alerts-panel";
-import type { Sale, Purchase, Payment, Expense, FixedAsset } from "@/lib/accounts/types";
+import type { Sale, Purchase, Payment, Expense, FixedAsset, TdsChallan } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const inrCompact = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", notation: "compact", maximumFractionDigits: 1 });
@@ -112,6 +113,7 @@ export function DashboardClient({ userName }: { userName: string }) {
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [fixedAssets, setFixedAssets] = React.useState<FixedAsset[]>([]);
+  const [tdsChallans, setTdsChallans] = React.useState<TdsChallan[]>([]);
   const [periodMode, setPeriodMode] = React.useState<"month" | "fy">("month");
   const [monthKey, setMonthKey] = React.useState(currentMonthKey());
 
@@ -120,9 +122,10 @@ export function DashboardClient({ userName }: { userName: string }) {
   React.useEffect(() => subscribeToPayments(setPayments), []);
   React.useEffect(() => subscribeToExpenses(setExpenses), []);
   React.useEffect(() => subscribeToFixedAssets(setFixedAssets), []);
+  React.useEffect(() => subscribeToTdsChallans(setTdsChallans), []);
 
   const period: Period = periodMode === "fy" ? financialYearPeriod() : monthPeriod(monthKey);
-  const summary = calcDashboardSummary(sales, purchases, payments, expenses, fixedAssets, period);
+  const summary = calcDashboardSummary(sales, purchases, payments, expenses, fixedAssets, tdsChallans, period);
   const trend = buildMonthlyTrend(sales, purchases, lastMonthKeys(12));
   const topCustomers = topCustomersByValue(sales, period);
   const topItems = topItemsByValue(sales, period);

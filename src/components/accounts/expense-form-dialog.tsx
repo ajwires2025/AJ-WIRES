@@ -26,13 +26,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { calcExpenseTax } from "@/lib/accounts/gst-calc";
+import { calcTdsAmount } from "@/lib/accounts/tds";
 import { createExpense, updateExpense } from "@/lib/accounts/expenses";
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   PAYMENT_METHOD_LABELS,
+  TDS_SECTIONS,
+  DEFAULT_TDS_RATES,
   type Expense,
   type ExpenseInput,
+  type TdsSection,
 } from "@/lib/accounts/types";
 
 const expenseSchema = z.object({
@@ -45,6 +49,8 @@ const expenseSchema = z.object({
   method: z.enum(["bank", "cash", "upi", "cheque"]),
   gstApplicable: z.boolean(),
   gstRate: z.number().min(0).max(100),
+  tdsSection: z.union([z.enum(TDS_SECTIONS), z.literal("")]),
+  tdsRatePercent: z.number().min(0).max(100),
   notes: z.string().optional(),
 });
 
@@ -54,6 +60,10 @@ const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR",
 
 function toInput(values: FormValues): ExpenseInput {
   const tax = calcExpenseTax(values.amount, values.gstRate, values.gstApplicable);
+  // TDS only applies when WE are the one paying (deducting before payment) —
+  // never on money coming in as other income.
+  const tdsApplicable = values.direction === "expense" && values.tdsSection !== "";
+  const tdsAmount = tdsApplicable ? calcTdsAmount(tax.taxableValue, values.tdsRatePercent) : 0;
   return {
     direction: values.direction,
     category: values.category,
@@ -65,6 +75,9 @@ function toInput(values: FormValues): ExpenseInput {
     gstApplicable: values.gstApplicable,
     gstRate: values.gstApplicable ? values.gstRate : 0,
     ...tax,
+    tdsSection: tdsApplicable ? values.tdsSection : "",
+    tdsRatePercent: tdsApplicable ? values.tdsRatePercent : 0,
+    tdsAmount,
     notes: values.notes ?? "",
   };
 }
@@ -100,6 +113,8 @@ export function ExpenseFormDialog({
       method: "cash",
       gstApplicable: false,
       gstRate: 18,
+      tdsSection: "",
+      tdsRatePercent: 10,
       notes: "",
     },
   });
@@ -118,6 +133,8 @@ export function ExpenseFormDialog({
             method: expense.method,
             gstApplicable: expense.gstApplicable,
             gstRate: expense.gstRate || 18,
+            tdsSection: expense.tdsSection || "",
+            tdsRatePercent: expense.tdsRatePercent || 10,
             notes: expense.notes,
           }
         : {
@@ -130,6 +147,8 @@ export function ExpenseFormDialog({
             method: "cash",
             gstApplicable: false,
             gstRate: 18,
+            tdsSection: "",
+            tdsRatePercent: 10,
             notes: "",
           }
     );
@@ -139,8 +158,12 @@ export function ExpenseFormDialog({
   const amount = watch("amount");
   const gstApplicable = watch("gstApplicable");
   const gstRate = watch("gstRate");
+  const tdsSection = watch("tdsSection");
+  const tdsRatePercent = watch("tdsRatePercent");
   const categories = direction === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
   const preview = calcExpenseTax(amount || 0, gstRate || 0, gstApplicable);
+  const tdsPreviewAmount = direction === "expense" && tdsSection ? calcTdsAmount(preview.taxableValue, tdsRatePercent || 0) : 0;
+  const netPayablePreview = preview.grandTotal - tdsPreviewAmount;
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -266,6 +289,42 @@ export function ExpenseFormDialog({
               </div>
             )}
 
+            {direction === "expense" && (
+              <>
+                <div>
+                  <Label>TDS deducted (section)</Label>
+                  <Controller
+                    control={control}
+                    name="tdsSection"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value || "none"}
+                        onValueChange={(v) => {
+                          const section = v === "none" ? "" : (v as TdsSection);
+                          field.onChange(section);
+                          if (section) setValue("tdsRatePercent", DEFAULT_TDS_RATES[section]);
+                        }}
+                      >
+                        <SelectTrigger className="mt-1.5 w-full"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No TDS</SelectItem>
+                          {TDS_SECTIONS.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                {tdsSection && (
+                  <div>
+                    <Label htmlFor="tdsRatePercent">TDS rate (%)</Label>
+                    <Input id="tdsRatePercent" type="number" step="0.01" className="mt-1.5" {...register("tdsRatePercent", { valueAsNumber: true })} />
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="sm:col-span-2">
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" className="mt-1.5" rows={2} {...register("notes")} />
@@ -283,6 +342,12 @@ export function ExpenseFormDialog({
             <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold text-foreground">
               <span>Total</span><span>{inr.format(preview.grandTotal)}</span>
             </div>
+            {tdsPreviewAmount > 0 && (
+              <>
+                <div className="mt-1 flex justify-between text-muted-foreground"><span>Less: TDS withheld</span><span>({inr.format(tdsPreviewAmount)})</span></div>
+                <div className="flex justify-between font-semibold text-foreground"><span>Net payable to vendor</span><span>{inr.format(netPayablePreview)}</span></div>
+              </>
+            )}
           </div>
 
           <DialogFooter>

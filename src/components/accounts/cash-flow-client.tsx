@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/select";
 import { subscribeToPayments } from "@/lib/accounts/payments";
 import { subscribeToExpenses } from "@/lib/accounts/expenses";
+import { subscribeToTdsChallans } from "@/lib/accounts/tds-challans";
 import { calcCashFlow } from "@/lib/accounts/cashflow";
 import { downloadCsv } from "@/lib/accounts/csv";
 import { currentMonthKey, lastMonthKeys, monthPeriod, financialYearPeriod, type Period } from "@/lib/accounts/period";
 import { currentFinancialYearKey } from "@/lib/accounts/invoice-number";
-import type { Payment, Expense } from "@/lib/accounts/types";
+import type { Payment, Expense, TdsChallan } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -32,14 +33,16 @@ function Row({ label, value, bold = false }: { label: string; value: string; bol
 export function CashFlowClient() {
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [expenses, setExpenses] = React.useState<Expense[]>([]);
+  const [tdsChallans, setTdsChallans] = React.useState<TdsChallan[]>([]);
   const [periodMode, setPeriodMode] = React.useState<"month" | "fy">("month");
   const [monthKey, setMonthKey] = React.useState(currentMonthKey());
 
   React.useEffect(() => subscribeToPayments(setPayments), []);
   React.useEffect(() => subscribeToExpenses(setExpenses), []);
+  React.useEffect(() => subscribeToTdsChallans(setTdsChallans), []);
 
   const period: Period = periodMode === "fy" ? financialYearPeriod() : monthPeriod(monthKey);
-  const cf = calcCashFlow(payments, expenses, period);
+  const cf = calcCashFlow(payments, expenses, tdsChallans, period);
   const monthOptions = lastMonthKeys(12).map((key) => ({ key, label: monthPeriod(key).label }));
 
   const handleExport = () => {

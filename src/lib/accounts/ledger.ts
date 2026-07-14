@@ -1,4 +1,4 @@
-import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, LedgerAccountType } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, TdsChallan, LedgerAccountType } from "@/lib/accounts/types";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -36,6 +36,8 @@ const FIXED_ACCOUNTS: { name: string; type: LedgerAccountType }[] = [
   { name: "Output SGST", type: "liability" },
   { name: "Output IGST", type: "liability" },
   { name: "Round Off", type: "expense" },
+  { name: "TDS Payable", type: "liability" },
+  { name: "TDS Receivable", type: "asset" },
 ];
 
 function post(
@@ -70,7 +72,8 @@ export function buildGeneralLedger(
   expenses: Expense[] = [],
   journalVouchers: JournalVoucher[] = [],
   creditNotes: CreditNote[] = [],
-  debitNotes: DebitNote[] = []
+  debitNotes: DebitNote[] = [],
+  tdsChallans: TdsChallan[] = []
 ): LedgerAccount[] {
   const ledgers = new Map<string, LedgerAccount>();
   for (const acc of FIXED_ACCOUNTS) {
@@ -108,6 +111,13 @@ export function buildGeneralLedger(
     if (s.sgst) post(ledgers, "Output SGST", "liability", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: 0, credit: s.sgst });
     if (s.igst) post(ledgers, "Output IGST", "liability", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: 0, credit: s.igst });
     if (s.roundOff) post(ledgers, "Round Off", "expense", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration, debit: s.roundOff < 0 ? -s.roundOff : 0, credit: s.roundOff > 0 ? s.roundOff : 0 });
+    // TDS the customer deducted never reaches our bank — it settles part of
+    // their outstanding balance directly, funded by a TDS Receivable credit
+    // we can claim against income tax (verify against Form 26AS).
+    if (s.tdsAmount) {
+      post(ledgers, "TDS Receivable", "asset", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration: `TDS deducted by ${s.customerName}`, debit: s.tdsAmount, credit: 0 });
+      post(ledgers, s.customerName, "party", { date: s.invoiceDate, voucherType: "Sales", refNumber: s.invoiceNumber, narration: `TDS deducted by ${s.customerName}`, debit: 0, credit: s.tdsAmount });
+    }
   }
 
   for (const pay of payments) {
@@ -130,7 +140,12 @@ export function buildGeneralLedger(
       if (exp.cgst) post(ledgers, "Input CGST", "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.cgst, credit: 0 });
       if (exp.sgst) post(ledgers, "Input SGST", "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.sgst, credit: 0 });
       if (exp.igst) post(ledgers, "Input IGST", "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.igst, credit: 0 });
-      post(ledgers, cashBank, "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.grandTotal });
+      // TDS withheld from the vendor never leaves the bank — it becomes a
+      // liability until deposited via a TdsChallan (see below).
+      if (exp.tdsAmount) {
+        post(ledgers, "TDS Payable", "liability", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.tdsAmount });
+      }
+      post(ledgers, cashBank, "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: round2(exp.grandTotal - (exp.tdsAmount || 0)) });
     } else {
       post(ledgers, cashBank, "asset", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: exp.grandTotal, credit: 0 });
       post(ledgers, exp.category, "income", { date: exp.date, voucherType: "Payment", refNumber: exp.category, narration, debit: 0, credit: exp.taxableValue });
@@ -169,6 +184,14 @@ export function buildGeneralLedger(
     if (dn.cgst) post(ledgers, "Input CGST", "asset", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: 0, credit: dn.cgst });
     if (dn.sgst) post(ledgers, "Input SGST", "asset", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: 0, credit: dn.sgst });
     if (dn.igst) post(ledgers, "Input IGST", "asset", { date: dn.noteDate, voucherType: "Debit Note", refNumber: dn.noteNumber, narration, debit: 0, credit: dn.igst });
+  }
+
+  // Depositing withheld TDS with the government clears the liability —
+  // always via bank (challans are paid through net-banking/OLTAS).
+  for (const challan of tdsChallans) {
+    const narration = `TDS challan (${challan.section}) — ${challan.quarter}`;
+    post(ledgers, "TDS Payable", "liability", { date: challan.date, voucherType: "Payment", refNumber: challan.challanSerialNumber, narration, debit: challan.amount, credit: 0 });
+    post(ledgers, "Bank", "asset", { date: challan.date, voucherType: "Payment", refNumber: challan.challanSerialNumber, narration, debit: 0, credit: challan.amount });
   }
 
   return Array.from(ledgers.values())

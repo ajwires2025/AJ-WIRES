@@ -10,8 +10,9 @@ import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { subscribeToJournalVouchers } from "@/lib/accounts/journal";
 import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
 import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
+import { subscribeToTdsChallans } from "@/lib/accounts/tds-challans";
 import { buildGeneralLedger, type LedgerAccountType } from "@/lib/accounts/ledger";
-import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, TdsChallan } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -37,6 +38,7 @@ export function TrialBalanceClient() {
   const [journalVouchers, setJournalVouchers] = React.useState<JournalVoucher[]>([]);
   const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
   const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
+  const [tdsChallans, setTdsChallans] = React.useState<TdsChallan[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
@@ -46,8 +48,9 @@ export function TrialBalanceClient() {
   React.useEffect(() => subscribeToJournalVouchers(setJournalVouchers), []);
   React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
   React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
+  React.useEffect(() => subscribeToTdsChallans(setTdsChallans), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, tdsChallans);
   const totalDebit = round2(ledger.reduce((s, a) => s + (a.balance > 0 ? a.balance : 0), 0));
   const totalCredit = round2(ledger.reduce((s, a) => s + (a.balance < 0 ? -a.balance : 0), 0));
   const inBalance = Math.abs(totalDebit - totalCredit) < 0.01;

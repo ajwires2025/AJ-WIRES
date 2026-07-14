@@ -69,6 +69,8 @@ export async function convertQuotationToSale(quotation: Quotation, createdBy: st
     roundOff: quotation.roundOff,
     grandTotal: quotation.grandTotal,
     amountReceived: 0,
+    tdsSection: "",
+    tdsAmount: 0,
     paymentStatus: "unpaid",
     invoiceFileUrl: "",
     invoiceFileName: "",

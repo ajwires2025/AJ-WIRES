@@ -25,7 +25,7 @@ import { subscribeToItems } from "@/lib/accounts/items";
 import { calcLine, calcSaleTotals, calcLineMargin, derivePaymentStatus } from "@/lib/accounts/gst-calc";
 import { getNextInvoiceNumber } from "@/lib/accounts/invoice-number";
 import { GST_STATES, HOME_STATE_CODE } from "@/lib/accounts/gst-states";
-import { UNIT_LABELS, PAYMENT_STATUS_LABELS, type Party, type Item, type Sale, type SaleInput } from "@/lib/accounts/types";
+import { UNIT_LABELS, PAYMENT_STATUS_LABELS, TDS_SECTIONS, type Party, type Item, type Sale, type SaleInput, type TdsSection } from "@/lib/accounts/types";
 import {
   createSale,
   updateSale,
@@ -53,6 +53,8 @@ const saleSchema = z.object({
   placeOfSupplyStateCode: z.string().min(1, "Select a state"),
   items: z.array(lineSchema).min(1, "Add at least one item"),
   amountReceived: z.number().min(0),
+  tdsSection: z.union([z.enum(TDS_SECTIONS), z.literal("")]),
+  tdsAmount: z.number().min(0),
   notes: z.string().optional(),
 });
 
@@ -116,6 +118,8 @@ export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser 
             gstRate: i.gstRate,
           })),
           amountReceived: sale.amountReceived,
+          tdsSection: sale.tdsSection || "",
+          tdsAmount: sale.tdsAmount || 0,
           notes: sale.notes,
         }
       : {
@@ -126,6 +130,8 @@ export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser 
           placeOfSupplyStateCode: HOME_STATE_CODE,
           items: [emptyLine],
           amountReceived: 0,
+          tdsSection: "",
+          tdsAmount: 0,
           notes: "",
         },
   });
@@ -134,6 +140,8 @@ export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser 
   const watchedItems = watch("items");
   const watchedPlaceOfSupply = watch("placeOfSupplyStateCode");
   const watchedAmountReceived = watch("amountReceived");
+  const watchedTdsSection = watch("tdsSection");
+  const watchedTdsAmount = watch("tdsAmount");
 
   const computedLines = watchedItems.map((line) => {
     const gstCalc = calcLine(Number(line.quantity) || 0, Number(line.rate) || 0, Number(line.gstRate) || 0, watchedPlaceOfSupply);
@@ -142,7 +150,9 @@ export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser 
   });
   const saleItemsForTotals = watchedItems.map((line, i) => ({ ...line, ...computedLines[i] }));
   const totals = calcSaleTotals(saleItemsForTotals);
-  const paymentStatus = derivePaymentStatus(totals.grandTotal, Number(watchedAmountReceived) || 0);
+  // TDS the customer deducts is settled the same as cash received for
+  // payment-status purposes — it never reaches the bank but isn't owed either.
+  const paymentStatus = derivePaymentStatus(totals.grandTotal, (Number(watchedAmountReceived) || 0) + (Number(watchedTdsAmount) || 0));
 
   const handleCustomerChange = (customerId: string) => {
     setValue("customerId", customerId);
@@ -199,7 +209,9 @@ export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser 
         roundOff: saleTotals.roundOff,
         grandTotal: saleTotals.grandTotal,
         amountReceived: values.amountReceived,
-        paymentStatus: derivePaymentStatus(saleTotals.grandTotal, values.amountReceived),
+        tdsSection: values.tdsSection,
+        tdsAmount: values.tdsSection ? values.tdsAmount : 0,
+        paymentStatus: derivePaymentStatus(saleTotals.grandTotal, values.amountReceived + (values.tdsSection ? values.tdsAmount : 0)),
         invoiceFileUrl: existingFileUrl,
         invoiceFileName: existingFileName,
         cogsTotal: saleTotals.cogsTotal,
@@ -320,6 +332,33 @@ export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser 
               {...register("amountReceived", { valueAsNumber: true })}
             />
           </div>
+
+          <div>
+            <Label>TDS deducted by customer (section)</Label>
+            <Controller
+              control={control}
+              name="tdsSection"
+              render={({ field }) => (
+                <Select value={field.value || "none"} onValueChange={(v) => field.onChange(v === "none" ? "" : (v as TdsSection))} disabled={readOnly}>
+                  <SelectTrigger className="mt-1.5 w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No TDS</SelectItem>
+                    {TDS_SECTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          {watchedTdsSection && (
+            <div>
+              <Label htmlFor="tdsAmount">TDS amount (₹)</Label>
+              <Input id="tdsAmount" type="number" step="0.01" className="mt-1.5" disabled={readOnly} {...register("tdsAmount", { valueAsNumber: true })} />
+              <p className="mt-1 text-xs text-muted-foreground">As informed by the customer — verify against Form 26AS.</p>
+            </div>
+          )}
 
           <div>
             <Label>Payment status</Label>

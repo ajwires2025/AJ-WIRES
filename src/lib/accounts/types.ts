@@ -205,6 +205,12 @@ export type Sale = {
   roundOff: number;
   grandTotal: number;
   amountReceived: number;
+  // TDS the CUSTOMER deducts before paying us (they remit it to the
+  // government under our PAN — verify via Form 26AS). Treated like a
+  // payment for outstanding/status purposes even though it never hits our
+  // bank — see src/lib/accounts/outstanding.ts.
+  tdsSection: TdsSection | "";
+  tdsAmount: number;
   paymentStatus: PaymentStatus;
   invoiceFileUrl: string;
   invoiceFileName: string;
@@ -381,6 +387,13 @@ export type Expense = {
   igst: number;
   totalTax: number;
   grandTotal: number;
+  // TDS WE deduct before paying a vendor (Rent, Professional Fees,
+  // Commission, Contractor payments, ...). tdsAmount is withheld from cash
+  // paid and becomes a "TDS Payable" liability until deposited via a
+  // TdsChallan — see src/lib/accounts/ledger.ts and tds.ts.
+  tdsSection: TdsSection | "";
+  tdsRatePercent: number;
+  tdsAmount: number;
   notes: string;
   createdBy: string;
   createdAt: string;
@@ -502,6 +515,48 @@ export type FixedAsset = {
 };
 
 export type FixedAssetInput = Omit<FixedAsset, "id" | "createdBy" | "createdAt">;
+
+// Sections most relevant to a trading/manufacturing business paying rent,
+// commission, contractors, and professional fees. Rates are working
+// defaults (Finance Act rates change and depend on PAN availability/
+// thresholds) — verify with your CA before relying on them.
+export const TDS_SECTIONS = [
+  "194C - Contractors",
+  "194H - Commission/Brokerage",
+  "194I - Rent",
+  "194J - Professional/Technical Fees",
+  "194Q - Purchase of Goods",
+  "Other",
+] as const;
+
+export type TdsSection = (typeof TDS_SECTIONS)[number];
+
+export const DEFAULT_TDS_RATES: Record<TdsSection, number> = {
+  "194C - Contractors": 1,
+  "194H - Commission/Brokerage": 5,
+  "194I - Rent": 10,
+  "194J - Professional/Technical Fees": 10,
+  "194Q - Purchase of Goods": 0.1,
+  Other: 10,
+};
+
+// A challan (Form 281) recording actual deposit of deducted TDS with the
+// government — reduces the outstanding TDS Payable liability. BSR
+// code/challan serial together form the CIN quoted in the quarterly return.
+export type TdsChallan = {
+  id: string;
+  date: string;
+  section: TdsSection;
+  amount: number;
+  bsrCode: string;
+  challanSerialNumber: string;
+  quarter: string;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type TdsChallanInput = Omit<TdsChallan, "id" | "createdBy" | "createdAt">;
 
 export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 

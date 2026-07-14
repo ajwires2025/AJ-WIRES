@@ -66,7 +66,9 @@ export function PaymentStatusDialog({
   const partyName = sale ? sale.customerName : (bill as Purchase | null)?.supplierName ?? "";
   const grandTotal = bill?.grandTotal ?? 0;
   const currentAmount = sale ? sale.amountReceived : (bill as Purchase | null)?.amountPaid ?? 0;
-  const outstanding = round2(grandTotal - currentAmount);
+  // TDS the customer deducted is settled, not still outstanding.
+  const tdsAmount = sale?.tdsAmount || 0;
+  const outstanding = round2(grandTotal - currentAmount - tdsAmount);
   const direction: "received" | "paid" = sale ? "received" : "paid";
   const linkedType: "sale" | "purchase" = sale ? "sale" : "purchase";
 
