@@ -1,4 +1,4 @@
-import type { Item, Purchase, Sale, CreditNote, DebitNote } from "@/lib/accounts/types";
+import type { Item, Purchase, Sale, CreditNote, DebitNote, ProductionVoucher } from "@/lib/accounts/types";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -7,7 +7,14 @@ function round3(n: number): number {
   return Math.round((n + Number.EPSILON) * 1000) / 1000;
 }
 
-export type StockMovementType = "opening" | "purchase" | "sale" | "sales_return" | "purchase_return";
+export type StockMovementType =
+  | "opening"
+  | "purchase"
+  | "sale"
+  | "sales_return"
+  | "purchase_return"
+  | "production_consume"
+  | "production_output";
 
 export type StockMovement = {
   date: string;
@@ -32,7 +39,8 @@ export function computeItemStockLedger(
   purchases: Purchase[],
   sales: Sale[],
   creditNotes: CreditNote[] = [],
-  debitNotes: DebitNote[] = []
+  debitNotes: DebitNote[] = [],
+  productionVouchers: ProductionVoucher[] = []
 ): StockMovement[] {
   const events: { date: string; type: StockMovementType; refNumber: string; partyName: string; qty: number; rate: number }[] = [];
 
@@ -88,6 +96,33 @@ export function computeItemStockLedger(
         partyName: dn.supplierName,
         qty: -line.quantity,
         rate: line.rate,
+      });
+    }
+  }
+
+  for (const pv of productionVouchers) {
+    // Raw materials consumed — valued at running average cost at that point
+    // (like a sale), not the rate captured when the voucher was created.
+    for (const line of pv.consumedLines) {
+      if (line.itemId !== item.id) continue;
+      events.push({
+        date: pv.date,
+        type: "production_consume",
+        refNumber: `Production of ${pv.finishedItemName}`,
+        partyName: "",
+        qty: -line.quantity,
+        rate: line.rate,
+      });
+    }
+    // Finished good produced — comes in at the voucher's computed unit cost.
+    if (pv.finishedItemId === item.id) {
+      events.push({
+        date: pv.date,
+        type: "production_output",
+        refNumber: "Production",
+        partyName: "",
+        qty: pv.quantityProduced,
+        rate: pv.unitCost,
       });
     }
   }
@@ -167,13 +202,14 @@ export function computeStockSummary(
   purchases: Purchase[],
   sales: Sale[],
   creditNotes: CreditNote[] = [],
-  debitNotes: DebitNote[] = []
+  debitNotes: DebitNote[] = [],
+  productionVouchers: ProductionVoucher[] = []
 ): StockSummaryRow[] {
   return items.map((item) => {
-    const ledger = computeItemStockLedger(item, purchases, sales, creditNotes, debitNotes);
+    const ledger = computeItemStockLedger(item, purchases, sales, creditNotes, debitNotes, productionVouchers);
     const last = ledger[ledger.length - 1];
-    const totalIn = ledger.reduce((sum, m) => sum + (m.type === "purchase" || m.type === "sales_return" ? m.qtyIn : 0), 0);
-    const totalOut = ledger.reduce((sum, m) => sum + (m.type === "sale" || m.type === "purchase_return" ? m.qtyOut : 0), 0);
+    const totalIn = ledger.reduce((sum, m) => sum + (m.type === "purchase" || m.type === "sales_return" || m.type === "production_output" ? m.qtyIn : 0), 0);
+    const totalOut = ledger.reduce((sum, m) => sum + (m.type === "sale" || m.type === "purchase_return" || m.type === "production_consume" ? m.qtyOut : 0), 0);
 
     return {
       itemId: item.id,

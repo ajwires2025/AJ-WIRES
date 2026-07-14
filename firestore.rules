@@ -76,6 +76,11 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // Raw material -> finished good production entries.
+    match /productionVouchers/{voucherId} {
+      allow read, write: if isStaff();
+    }
+
     // Log of every reminder email sent (or attempted) — written by the
     // server-side send API using the Admin SDK, but readable here so the UI
     // can show history.

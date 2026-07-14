@@ -9,8 +9,9 @@ import { subscribeToPurchases } from "@/lib/accounts/purchases";
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
 import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
+import { subscribeToProductionVouchers } from "@/lib/accounts/production";
 import { computeStockSummary, computeItemStockLedger } from "@/lib/accounts/stock";
-import { UNIT_LABELS, type Item, type Purchase, type Sale, type CreditNote, type DebitNote } from "@/lib/accounts/types";
+import { UNIT_LABELS, type Item, type Purchase, type Sale, type CreditNote, type DebitNote, type ProductionVoucher } from "@/lib/accounts/types";
 
 const num = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
@@ -21,6 +22,8 @@ const TYPE_BADGE: Record<string, string> = {
   sale: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   sales_return: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   purchase_return: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  production_consume: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+  production_output: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
 };
 
 export function StockLedgerClient() {
@@ -29,6 +32,7 @@ export function StockLedgerClient() {
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
   const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
+  const [productionVouchers, setProductionVouchers] = React.useState<ProductionVoucher[]>([]);
   const [search, setSearch] = React.useState("");
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
@@ -37,8 +41,9 @@ export function StockLedgerClient() {
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
   React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
+  React.useEffect(() => subscribeToProductionVouchers(setProductionVouchers), []);
 
-  const summary = computeStockSummary(items, purchases, sales, creditNotes, debitNotes).filter((row) =>
+  const summary = computeStockSummary(items, purchases, sales, creditNotes, debitNotes, productionVouchers).filter((row) =>
     row.itemName.toLowerCase().includes(search.trim().toLowerCase())
   );
 
@@ -103,7 +108,7 @@ export function StockLedgerClient() {
                       {isExpanded && (
                         <tr>
                           <td colSpan={8} className="bg-muted/20 px-4 py-4">
-                            <StockMovementDetail item={item} purchases={purchases} sales={sales} creditNotes={creditNotes} debitNotes={debitNotes} />
+                            <StockMovementDetail item={item} purchases={purchases} sales={sales} creditNotes={creditNotes} debitNotes={debitNotes} productionVouchers={productionVouchers} />
                           </td>
                         </tr>
                       )}
@@ -125,14 +130,16 @@ function StockMovementDetail({
   sales,
   creditNotes,
   debitNotes,
+  productionVouchers,
 }: {
   item: Item;
   purchases: Purchase[];
   sales: Sale[];
   creditNotes: CreditNote[];
   debitNotes: DebitNote[];
+  productionVouchers: ProductionVoucher[];
 }) {
-  const movements = computeItemStockLedger(item, purchases, sales, creditNotes, debitNotes);
+  const movements = computeItemStockLedger(item, purchases, sales, creditNotes, debitNotes, productionVouchers);
 
   return (
     <div className="overflow-x-auto">

@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { subscribeToItems } from "@/lib/accounts/items";
 import { ITEM_CATEGORY_LABELS, UNIT_LABELS, type Item, type ItemInput } from "@/lib/accounts/types";
 import { createItem, updateItem } from "@/lib/accounts/items";
+
+const bomLineSchema = z.object({
+  itemId: z.string().min(1, "Select a raw material"),
+  itemName: z.string(),
+  quantityPerUnit: z.number().min(0.001, "Enter a quantity"),
+  unit: z.enum(["kg", "meter", "roll", "piece"]),
+});
 
 const itemSchema = z.object({
   name: z.string().min(2, "Enter a name"),
@@ -37,6 +45,7 @@ const itemSchema = z.object({
   defaultSalePrice: z.number().min(0),
   gstRate: z.number().min(0).max(100),
   openingStock: z.number().min(0),
+  bom: z.array(bomLineSchema),
   notes: z.string().optional(),
 });
 
@@ -57,10 +66,16 @@ export function ItemFormDialog({
   item: Item | null;
   createdBy: string;
 }) {
+  const [allItems, setAllItems] = React.useState<Item[]>([]);
+  React.useEffect(() => subscribeToItems(setAllItems), []);
+  const rawMaterialOptions = allItems.filter((i) => i.id !== item?.id);
+
   const {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ItemFormValues>({
@@ -74,9 +89,12 @@ export function ItemFormDialog({
       defaultSalePrice: 0,
       gstRate: 18,
       openingStock: 0,
+      bom: [],
       notes: "",
     },
   });
+
+  const { fields: bomFields, append: appendBom, remove: removeBom } = useFieldArray({ control, name: "bom" });
 
   React.useEffect(() => {
     if (!open) return;
@@ -91,6 +109,7 @@ export function ItemFormDialog({
             defaultSalePrice: item.defaultSalePrice,
             gstRate: item.gstRate,
             openingStock: item.openingStock ?? 0,
+            bom: item.bom ?? [],
             notes: item.notes,
           }
         : {
@@ -102,10 +121,19 @@ export function ItemFormDialog({
             defaultSalePrice: 0,
             gstRate: 18,
             openingStock: 0,
+            bom: [],
             notes: "",
           }
     );
   }, [open, item, reset]);
+
+  const handleRawMaterialChange = (index: number, itemId: string) => {
+    const raw = allItems.find((i) => i.id === itemId);
+    if (!raw) return;
+    setValue(`bom.${index}.itemId`, raw.id);
+    setValue(`bom.${index}.itemName`, raw.name);
+    setValue(`bom.${index}.unit`, raw.unit);
+  };
 
   const onSubmit = async (values: ItemFormValues) => {
     try {
@@ -208,6 +236,55 @@ export function ItemFormDialog({
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" className="mt-1.5" rows={2} {...register("notes")} />
             </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Bill of materials</Label>
+                <p className="text-xs text-muted-foreground">
+                  Raw materials consumed to produce ONE {UNIT_LABELS[watch("unit")]} of this item. Leave empty for
+                  raw materials that aren&apos;t manufactured from anything else.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => appendBom({ itemId: "", itemName: "", quantityPerUnit: 1, unit: "kg" })}
+              >
+                <Plus className="size-4" /> Add
+              </Button>
+            </div>
+
+            {bomFields.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {bomFields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-[1.6fr_1fr_auto] gap-2">
+                    <Select
+                      value={watch(`bom.${index}.itemId`)}
+                      onValueChange={(v) => handleRawMaterialChange(index, v)}
+                    >
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select raw material" /></SelectTrigger>
+                      <SelectContent>
+                        {rawMaterialOptions.map((i) => (
+                          <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      placeholder="Qty per unit"
+                      {...register(`bom.${index}.quantityPerUnit`, { valueAsNumber: true })}
+                    />
+                    <Button type="button" size="icon-sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => removeBom(index)}>
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <DialogFooter>

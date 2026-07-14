@@ -26,6 +26,7 @@ import {
   Settings,
   FileMinus,
   FilePlus,
+  Factory,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -57,6 +58,7 @@ const primaryNavItems = [
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
   { href: "/accounts/expenses", label: "Expenses", icon: ReceiptText },
   { href: "/accounts/journal-vouchers", label: "Journal Vouchers", icon: BookOpen },
+  { href: "/accounts/production", label: "Production", icon: Factory },
 ];
 
 const reportNavItems = [

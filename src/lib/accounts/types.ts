@@ -22,6 +22,15 @@ export type PartyInput = Omit<Party, "id" | "createdBy" | "createdAt">;
 export type ItemCategory = "gi_wire" | "chain_link" | "barbed_wire" | "other";
 export type Unit = "kg" | "meter" | "roll" | "piece";
 
+// Bill of materials: one row per raw material consumed to produce ONE unit
+// of this (finished-good) item. Empty for raw-material-only items.
+export type BomLine = {
+  itemId: string;
+  itemName: string;
+  quantityPerUnit: number;
+  unit: Unit;
+};
+
 export type Item = {
   id: string;
   name: string;
@@ -32,6 +41,7 @@ export type Item = {
   defaultSalePrice: number;
   gstRate: number;
   openingStock: number;
+  bom: BomLine[];
   notes: string;
   createdBy: string;
   createdAt: string;
@@ -52,6 +62,37 @@ export const UNIT_LABELS: Record<Unit, string> = {
   roll: "Roll",
   piece: "Piece",
 };
+
+// Consumes raw materials (per the finished item's BOM, scaled by quantity
+// produced) out of stock and adds the finished good into stock, valued at
+// the consumed materials' cost + any additional production cost.
+export type ProductionConsumedLine = {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  unit: Unit;
+  rate: number;
+  value: number;
+};
+
+export type ProductionVoucher = {
+  id: string;
+  date: string;
+  finishedItemId: string;
+  finishedItemName: string;
+  quantityProduced: number;
+  unit: Unit;
+  consumedLines: ProductionConsumedLine[];
+  materialCost: number;
+  additionalCost: number;
+  totalCost: number;
+  unitCost: number;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type ProductionVoucherInput = Omit<ProductionVoucher, "id" | "createdBy" | "createdAt">;
 
 export type PaymentStatus = "unpaid" | "partial" | "paid";
 
@@ -338,6 +379,7 @@ export const DEFAULT_ITEMS: ItemInput[] = [
     defaultSalePrice: 0,
     gstRate: 18,
     openingStock: 0,
+    bom: [],
     notes: "Default HSN 7217 for galvanized iron/steel wire — verify with CA.",
   },
   {
@@ -349,6 +391,7 @@ export const DEFAULT_ITEMS: ItemInput[] = [
     defaultSalePrice: 0,
     gstRate: 18,
     openingStock: 0,
+    bom: [],
     notes: "Default HSN 7313 for barbed wire — verify with CA.",
   },
   {
@@ -360,6 +403,7 @@ export const DEFAULT_ITEMS: ItemInput[] = [
     defaultSalePrice: 0,
     gstRate: 18,
     openingStock: 0,
+    bom: [],
     notes: "Default HSN 7314 for wire netting / fencing grill — verify with CA.",
   },
 ];

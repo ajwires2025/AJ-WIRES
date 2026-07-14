@@ -11,9 +11,10 @@ import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { subscribeToJournalVouchers } from "@/lib/accounts/journal";
 import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
 import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
+import { subscribeToProductionVouchers } from "@/lib/accounts/production";
 import { buildGeneralLedger } from "@/lib/accounts/ledger";
 import { computeStockSummary } from "@/lib/accounts/stock";
-import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote } from "@/lib/accounts/types";
+import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, ProductionVoucher } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -55,6 +56,7 @@ export function BalanceSheetClient() {
   const [journalVouchers, setJournalVouchers] = React.useState<JournalVoucher[]>([]);
   const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
   const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
+  const [productionVouchers, setProductionVouchers] = React.useState<ProductionVoucher[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToItems(setItems), []);
@@ -63,11 +65,12 @@ export function BalanceSheetClient() {
   React.useEffect(() => subscribeToPayments(setPayments), []);
   React.useEffect(() => subscribeToExpenses(setExpenses), []);
   React.useEffect(() => subscribeToJournalVouchers(setJournalVouchers), []);
+  React.useEffect(() => subscribeToProductionVouchers(setProductionVouchers), []);
   React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
   React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
 
   const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes);
-  const stockSummary = computeStockSummary(items, purchases, sales, creditNotes, debitNotes);
+  const stockSummary = computeStockSummary(items, purchases, sales, creditNotes, debitNotes, productionVouchers);
 
   const find = (name: string) => ledger.find((a) => a.name === name);
   const bank = find("Bank")?.balance ?? 0;
