@@ -53,10 +53,13 @@ const primaryNavItems = [
   { href: "/accounts/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/accounts/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/accounts/sales", label: "Sales", icon: Receipt },
-  { href: "/accounts/credit-notes", label: "Credit Notes", icon: FileMinus },
-  { href: "/accounts/debit-notes", label: "Debit Notes", icon: FilePlus },
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
   { href: "/accounts/expenses", label: "Expenses", icon: ReceiptText },
+];
+
+const voucherNavItems = [
+  { href: "/accounts/credit-notes", label: "Credit Notes", icon: FileMinus },
+  { href: "/accounts/debit-notes", label: "Debit Notes", icon: FilePlus },
   { href: "/accounts/journal-vouchers", label: "Journal Vouchers", icon: BookOpen },
   { href: "/accounts/production", label: "Production", icon: Factory },
 ];
@@ -73,13 +76,13 @@ const reportNavItems = [
   { href: "/accounts/balance-sheet", label: "Balance Sheet", icon: Landmark },
 ];
 
-const masterDataNavItems = [
+const setupNavItems = [
   { href: "/accounts/parties", label: "Parties", icon: Users },
   { href: "/accounts/items", label: "Items", icon: Package },
   { href: "/accounts/settings", label: "Settings", icon: Settings },
 ];
 
-const allNavItems = [...primaryNavItems, ...reportNavItems, ...masterDataNavItems];
+const allNavItems = [...primaryNavItems, ...voucherNavItems, ...reportNavItems, ...setupNavItems];
 
 export function AccountsShell({
   user,
@@ -91,6 +94,8 @@ export function AccountsShell({
   const router = useRouter();
   const pathname = usePathname();
   const isReportsActive = reportNavItems.some((item) => item.href === pathname);
+  const isVouchersActive = voucherNavItems.some((item) => item.href === pathname);
+  const isSetupActive = setupNavItems.some((item) => item.href === pathname);
 
   const handleSignOut = async () => {
     try {
@@ -105,53 +110,62 @@ export function AccountsShell({
 
   const linkClass = (active: boolean) =>
     cn(
-      "rounded-md px-3 py-1.5 text-sm font-medium hover:bg-white/10 hover:text-white",
+      "shrink-0 rounded-md px-2.5 py-1.5 text-sm font-medium whitespace-nowrap hover:bg-white/10 hover:text-white",
       active ? "bg-white/10 text-white" : "text-white/70"
     );
+
+  const NavDropdown = ({
+    label,
+    icon: Icon,
+    items,
+    active,
+  }: {
+    label: string;
+    icon: React.ElementType;
+    items: { href: string; label: string; icon: React.ElementType }[];
+    active: boolean;
+  }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className={cn(linkClass(active), "flex items-center gap-1")}>
+          <Icon className="size-4" /> {label} <ChevronDown className="size-3.5" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {items.map((item) => (
+          <DropdownMenuItem key={item.href} asChild>
+            <Link href={item.href} className={pathname === item.href ? "bg-accent" : ""}>
+              <item.icon className="size-4" /> {item.label}
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b border-border bg-navy">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2 text-white">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
+          <div className="flex shrink-0 items-center gap-2 text-white">
             <ShieldCheck className="size-5 shrink-0 text-gold" />
-            <span className="font-heading text-sm font-semibold whitespace-nowrap">A.J. Wires Accounts</span>
+            <span className="hidden font-heading text-sm font-semibold whitespace-nowrap sm:inline">A.J. Wires Accounts</span>
           </div>
 
-          <nav className="hidden items-center gap-1 lg:flex">
+          <nav className="hidden min-w-0 flex-1 items-center gap-1 xl:flex">
             {primaryNavItems.map((item) => (
               <Link key={item.href} href={item.href} className={linkClass(pathname === item.href)}>
                 {item.label}
               </Link>
             ))}
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className={cn(linkClass(isReportsActive), "flex items-center gap-1")}>
-                  <BarChart3 className="size-4" /> Reports <ChevronDown className="size-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {reportNavItems.map((item) => (
-                  <DropdownMenuItem key={item.href} asChild>
-                    <Link href={item.href} className={pathname === item.href ? "bg-accent" : ""}>
-                      <item.icon className="size-4" /> {item.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {masterDataNavItems.map((item) => (
-              <Link key={item.href} href={item.href} className={linkClass(pathname === item.href)}>
-                {item.label}
-              </Link>
-            ))}
+            <NavDropdown label="Vouchers" icon={BookOpen} items={voucherNavItems} active={isVouchersActive} />
+            <NavDropdown label="Reports" icon={BarChart3} items={reportNavItems} active={isReportsActive} />
+            <NavDropdown label="Setup" icon={Settings} items={setupNavItems} active={isSetupActive} />
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-xs font-medium text-white">{user.name}</p>
+          <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="hidden text-right lg:block">
+              <p className="max-w-[10rem] truncate text-xs font-medium text-white">{user.name}</p>
               <p className="text-[10px] uppercase tracking-wider text-gold-light">{user.role}</p>
             </div>
             <Button
@@ -163,7 +177,7 @@ export function AccountsShell({
               <LogOut className="size-3.5" /> Sign out
             </Button>
 
-            <div className="lg:hidden">
+            <div className="xl:hidden">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button
