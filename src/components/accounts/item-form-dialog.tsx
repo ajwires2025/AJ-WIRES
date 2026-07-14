@@ -45,6 +45,7 @@ const itemSchema = z.object({
   defaultSalePrice: z.number().min(0),
   gstRate: z.number().min(0).max(100),
   openingStock: z.number().min(0),
+  reorderLevel: z.number().min(0),
   bom: z.array(bomLineSchema),
   notes: z.string().optional(),
 });
@@ -89,6 +90,7 @@ export function ItemFormDialog({
       defaultSalePrice: 0,
       gstRate: 18,
       openingStock: 0,
+      reorderLevel: 0,
       bom: [],
       notes: "",
     },
@@ -109,6 +111,7 @@ export function ItemFormDialog({
             defaultSalePrice: item.defaultSalePrice,
             gstRate: item.gstRate,
             openingStock: item.openingStock ?? 0,
+            reorderLevel: item.reorderLevel ?? 0,
             bom: item.bom ?? [],
             notes: item.notes,
           }
@@ -121,6 +124,7 @@ export function ItemFormDialog({
             defaultSalePrice: 0,
             gstRate: 18,
             openingStock: 0,
+            reorderLevel: 0,
             bom: [],
             notes: "",
           }
@@ -230,6 +234,13 @@ export function ItemFormDialog({
               <Label htmlFor="openingStock">Opening stock (qty)</Label>
               <Input id="openingStock" type="number" step="0.001" className="mt-1.5" {...register("openingStock", { valueAsNumber: true })} />
               {errors.openingStock && <p className="mt-1 text-xs text-destructive">{errors.openingStock.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="reorderLevel">Reorder level (low-stock alert)</Label>
+              <Input id="reorderLevel" type="number" step="0.001" className="mt-1.5" {...register("reorderLevel", { valueAsNumber: true })} />
+              <p className="mt-1 text-xs text-muted-foreground">Alert when closing stock falls at or below this. 0 disables the alert.</p>
+              {errors.reorderLevel && <p className="mt-1 text-xs text-destructive">{errors.reorderLevel.message}</p>}
             </div>
 
             <div className="sm:col-span-2">

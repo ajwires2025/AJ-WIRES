@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Boxes, ChevronDown, ChevronRight, Search } from "lucide-react";
+import { Boxes, ChevronDown, ChevronRight, Search, TriangleAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { subscribeToItems } from "@/lib/accounts/items";
@@ -48,6 +48,11 @@ export function StockLedgerClient() {
   );
 
   const totalStockValue = summary.reduce((sum, row) => sum + row.closingValue, 0);
+  const isLowStock = (row: (typeof summary)[number]) => {
+    const item = items.find((i) => i.id === row.itemId);
+    return !!item && item.reorderLevel > 0 && row.closingQty <= item.reorderLevel;
+  };
+  const lowStockCount = summary.filter(isLowStock).length;
 
   return (
     <div>
@@ -58,6 +63,13 @@ export function StockLedgerClient() {
         Per-item stock movements from purchases (in) and sales (out), valued at weighted-average cost.
         Total stock value on hand: <span className="font-medium text-foreground">{inr.format(totalStockValue)}</span>
       </p>
+
+      {lowStockCount > 0 && (
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <p>{lowStockCount} item{lowStockCount === 1 ? "" : "s"} at or below its reorder level. Set reorder levels on the Items page.</p>
+        </div>
+      )}
 
       <div className="mt-6 relative max-w-sm">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -95,7 +107,16 @@ export function StockLedgerClient() {
                         <td className="px-4 py-3 text-muted-foreground">
                           {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
                         </td>
-                        <td className="px-4 py-3 font-medium text-foreground">{row.itemName}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">
+                          <div className="flex items-center gap-2">
+                            {row.itemName}
+                            {isLowStock(row) && (
+                              <Badge variant="secondary" className="bg-destructive/10 text-destructive">
+                                <TriangleAlert className="size-3" /> Low stock
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
                           {num.format(row.openingStock)} {UNIT_LABELS[row.unit as keyof typeof UNIT_LABELS]?.split(" ")[0]}
                         </td>

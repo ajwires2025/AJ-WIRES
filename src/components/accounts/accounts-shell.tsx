@@ -27,6 +27,7 @@ import {
   FileMinus,
   FilePlus,
   Factory,
+  FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -66,6 +67,7 @@ const voucherNavItems = [
 
 const reportNavItems = [
   { href: "/accounts/pnl", label: "Profit & Loss", icon: FileText },
+  { href: "/accounts/gst-summary", label: "GST Summary", icon: FileSpreadsheet },
   { href: "/accounts/cash-flow", label: "Cash Flow", icon: Wallet },
   { href: "/accounts/aging", label: "Aging", icon: TrendingUp },
   { href: "/accounts/reconciliation", label: "Reconciliation", icon: CheckCircle2 },

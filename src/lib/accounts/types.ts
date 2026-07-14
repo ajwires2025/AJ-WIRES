@@ -41,6 +41,7 @@ export type Item = {
   defaultSalePrice: number;
   gstRate: number;
   openingStock: number;
+  reorderLevel: number;
   bom: BomLine[];
   notes: string;
   createdBy: string;
@@ -379,6 +380,7 @@ export const DEFAULT_ITEMS: ItemInput[] = [
     defaultSalePrice: 0,
     gstRate: 18,
     openingStock: 0,
+    reorderLevel: 500,
     bom: [],
     notes: "Default HSN 7217 for galvanized iron/steel wire — verify with CA.",
   },
@@ -391,6 +393,7 @@ export const DEFAULT_ITEMS: ItemInput[] = [
     defaultSalePrice: 0,
     gstRate: 18,
     openingStock: 0,
+    reorderLevel: 500,
     bom: [],
     notes: "Default HSN 7313 for barbed wire — verify with CA.",
   },
@@ -403,6 +406,7 @@ export const DEFAULT_ITEMS: ItemInput[] = [
     defaultSalePrice: 0,
     gstRate: 18,
     openingStock: 0,
+    reorderLevel: 50,
     bom: [],
     notes: "Default HSN 7314 for wire netting / fencing grill — verify with CA.",
   },
