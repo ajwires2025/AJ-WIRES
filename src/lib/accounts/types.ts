@@ -334,6 +334,35 @@ export const INCOME_CATEGORIES = [
   "Other Income",
 ];
 
+// Manual corrections to the auto-computed GST Summary — e.g. reverse charge
+// liability, ITC reversal, TDS/TCS, or rounding — that Tally would otherwise
+// require a separate journal for. Signed: positive increases net GST
+// payable, negative reduces it (adds ITC / carries forward).
+export const GST_ADJUSTMENT_CATEGORIES = [
+  "Reverse Charge (RCM)",
+  "ITC Reversal",
+  "TDS/TCS",
+  "Rounding",
+  "Other",
+] as const;
+
+export type GstAdjustmentCategory = (typeof GST_ADJUSTMENT_CATEGORIES)[number];
+
+export type GstAdjustment = {
+  id: string;
+  date: string;
+  category: GstAdjustmentCategory;
+  description: string;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type GstAdjustmentInput = Omit<GstAdjustment, "id" | "createdBy" | "createdAt">;
+
 export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 
 export type AgingRow = {

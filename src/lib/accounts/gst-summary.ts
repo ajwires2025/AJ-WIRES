@@ -1,4 +1,4 @@
-import type { Sale, Purchase, CreditNote, DebitNote, Expense } from "@/lib/accounts/types";
+import type { Sale, Purchase, CreditNote, DebitNote, Expense, GstAdjustment } from "@/lib/accounts/types";
 import { inPeriod, type Period } from "@/lib/accounts/period";
 
 function round2(n: number): number {
@@ -12,7 +12,17 @@ export type GstSummary = {
   outwardTaxable: GstTaxSplit;
   // Table 4 style — ITC available (purchases + GST-applicable expenses), net of debit notes issued.
   inwardTaxable: GstTaxSplit;
-  // Net position: positive = tax payable in cash, negative = ITC carried forward / refund due.
+  // Manual adjustments for this period (reverse charge, ITC reversal, TDS/TCS, rounding, etc).
+  adjustmentsInPeriod: GstAdjustment[];
+  adjCgst: number;
+  adjSgst: number;
+  adjIgst: number;
+  // Net position before adjustments — for reference/audit.
+  autoNetCgst: number;
+  autoNetSgst: number;
+  autoNetIgst: number;
+  autoNetPayable: number;
+  // Net position after adjustments: positive = tax payable in cash, negative = ITC carried forward / refund due.
   netCgst: number;
   netSgst: number;
   netIgst: number;
@@ -41,6 +51,7 @@ export function calcGstSummary(
   creditNotes: CreditNote[],
   debitNotes: DebitNote[],
   expenses: Expense[],
+  adjustments: GstAdjustment[],
   period: Period
 ): GstSummary {
   const outwardTaxable = emptySplit();
@@ -62,10 +73,35 @@ export function calcGstSummary(
     addInto(inwardTaxable, e.taxableValue, e.cgst, e.sgst, e.igst);
   }
 
-  const netCgst = round2(outwardTaxable.cgst - inwardTaxable.cgst);
-  const netSgst = round2(outwardTaxable.sgst - inwardTaxable.sgst);
-  const netIgst = round2(outwardTaxable.igst - inwardTaxable.igst);
+  const autoNetCgst = round2(outwardTaxable.cgst - inwardTaxable.cgst);
+  const autoNetSgst = round2(outwardTaxable.sgst - inwardTaxable.sgst);
+  const autoNetIgst = round2(outwardTaxable.igst - inwardTaxable.igst);
+  const autoNetPayable = round2(autoNetCgst + autoNetSgst + autoNetIgst);
+
+  const adjustmentsInPeriod = adjustments.filter((a) => inPeriod(a.date, period));
+  const adjCgst = round2(adjustmentsInPeriod.reduce((sum, a) => sum + a.cgst, 0));
+  const adjSgst = round2(adjustmentsInPeriod.reduce((sum, a) => sum + a.sgst, 0));
+  const adjIgst = round2(adjustmentsInPeriod.reduce((sum, a) => sum + a.igst, 0));
+
+  const netCgst = round2(autoNetCgst + adjCgst);
+  const netSgst = round2(autoNetSgst + adjSgst);
+  const netIgst = round2(autoNetIgst + adjIgst);
   const netPayable = round2(netCgst + netSgst + netIgst);
 
-  return { outwardTaxable, inwardTaxable, netCgst, netSgst, netIgst, netPayable };
+  return {
+    outwardTaxable,
+    inwardTaxable,
+    adjustmentsInPeriod,
+    adjCgst,
+    adjSgst,
+    adjIgst,
+    autoNetCgst,
+    autoNetSgst,
+    autoNetIgst,
+    autoNetPayable,
+    netCgst,
+    netSgst,
+    netIgst,
+    netPayable,
+  };
 }

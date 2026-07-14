@@ -81,6 +81,12 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // Manual corrections to the auto-computed GST Summary (reverse charge,
+    // ITC reversal, TDS/TCS, rounding, etc).
+    match /gstAdjustments/{adjustmentId} {
+      allow read, write: if isStaff();
+    }
+
     // Log of every reminder email sent (or attempted) — written by the
     // server-side send API using the Admin SDK, but readable here so the UI
     // can show history.
