@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { subscribeToPurchases } from "@/lib/accounts/purchases";
+import { PaymentStatusDialog } from "@/components/accounts/payment-status-dialog";
 import { PAYMENT_STATUS_LABELS, type Purchase, type PaymentStatus } from "@/lib/accounts/types";
 import type { SessionUser } from "@/lib/firebase/session";
 
@@ -30,6 +31,7 @@ export function PurchasesClient({ user }: { user: SessionUser }) {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | PaymentStatus>("all");
+  const [statusEditing, setStatusEditing] = React.useState<Purchase | null>(null);
 
   // Both Admin and CA have full edit access.
   const canEdit = user.role === "admin" || user.role === "ca";
@@ -101,25 +103,30 @@ export function PurchasesClient({ user }: { user: SessionUser }) {
           <p className="py-10 text-center text-sm text-muted-foreground">No purchases found.</p>
         ) : (
           filtered.map((p) => (
-            <Link
-              key={p.id}
-              href={`/accounts/purchases/${p.id}`}
-              className="block rounded-lg border border-border p-3 hover:bg-muted/30"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{p.billNumber}</p>
-                  <p className="truncate text-sm text-muted-foreground">{p.supplierName}</p>
+            <div key={p.id} className="rounded-lg border border-border p-3">
+              <Link href={`/accounts/purchases/${p.id}`} className="block hover:opacity-90">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{p.billNumber}</p>
+                    <p className="truncate text-sm text-muted-foreground">{p.supplierName}</p>
+                  </div>
                 </div>
-                <Badge variant="secondary" className={`shrink-0 ${STATUS_BADGE[p.paymentStatus]}`}>
+                <div className="mt-2 flex items-end justify-between gap-2">
+                  <p className="text-sm text-muted-foreground">Due {p.dueDate}</p>
+                  <p className="font-heading text-base font-bold text-foreground">{inr.format(p.grandTotal)}</p>
+                </div>
+              </Link>
+              <button
+                type="button"
+                disabled={!canEdit}
+                onClick={() => canEdit && setStatusEditing(p)}
+                className="mt-2"
+              >
+                <Badge variant="secondary" className={`shrink-0 ${STATUS_BADGE[p.paymentStatus]} ${canEdit ? "cursor-pointer hover:opacity-80" : ""}`}>
                   {PAYMENT_STATUS_LABELS[p.paymentStatus]}
                 </Badge>
-              </div>
-              <div className="mt-2 flex items-end justify-between gap-2">
-                <p className="text-sm text-muted-foreground">Due {p.dueDate}</p>
-                <p className="font-heading text-base font-bold text-foreground">{inr.format(p.grandTotal)}</p>
-              </div>
-            </Link>
+              </button>
+            </div>
           ))
         )}
       </div>
@@ -153,9 +160,11 @@ export function PurchasesClient({ user }: { user: SessionUser }) {
                     <td className="px-4 py-3 text-muted-foreground">{p.dueDate}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-foreground">{inr.format(p.grandTotal)}</td>
                     <td className="px-4 py-3">
-                      <Badge variant="secondary" className={STATUS_BADGE[p.paymentStatus]}>
-                        {PAYMENT_STATUS_LABELS[p.paymentStatus]}
-                      </Badge>
+                      <button type="button" disabled={!canEdit} onClick={() => canEdit && setStatusEditing(p)}>
+                        <Badge variant="secondary" className={`${STATUS_BADGE[p.paymentStatus]} ${canEdit ? "cursor-pointer hover:opacity-80" : ""}`}>
+                          {PAYMENT_STATUS_LABELS[p.paymentStatus]}
+                        </Badge>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -164,6 +173,15 @@ export function PurchasesClient({ user }: { user: SessionUser }) {
           </table>
         </div>
       </div>
+
+      {canEdit && (
+        <PaymentStatusDialog
+          open={!!statusEditing}
+          onOpenChange={(open) => !open && setStatusEditing(null)}
+          bill={statusEditing}
+          user={user}
+        />
+      )}
     </div>
   );
 }
