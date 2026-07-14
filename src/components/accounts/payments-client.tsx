@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus, Search, Wallet, Trash2, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,14 @@ import type { SessionUser } from "@/lib/firebase/session";
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
 export function PaymentsClient({ user }: { user: SessionUser }) {
+  const searchParams = useSearchParams();
+  const initialDirection = searchParams.get("direction");
   const [payments, setPayments] = React.useState<Payment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
-  const [directionFilter, setDirectionFilter] = React.useState<"all" | PaymentDirection>("all");
+  const [directionFilter, setDirectionFilter] = React.useState<"all" | PaymentDirection>(
+    initialDirection === "received" || initialDirection === "paid" ? initialDirection : "all"
+  );
   const [formOpen, setFormOpen] = React.useState(false);
   const [deletingPayment, setDeletingPayment] = React.useState<Payment | null>(null);
 

@@ -71,14 +71,16 @@ function Tile({
   value,
   icon,
   tone = "default",
+  href,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   tone?: "default" | "good" | "bad";
+  href?: string;
 }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
+  const content = (
+    <>
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
         <span
@@ -94,8 +96,18 @@ function Tile({
         </span>
       </div>
       <p className="mt-2 font-heading text-xl font-bold text-foreground sm:text-2xl">{value}</p>
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-gold/40 hover:bg-gold/5">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="rounded-xl border border-border bg-card p-4">{content}</div>;
 }
 
 const REPORT_LINKS = [
@@ -174,33 +186,36 @@ export function DashboardClient({ userName }: { userName: string }) {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <Tile label="Total Sales" value={inr.format(summary.totalSales)} icon={<Receipt className="size-5" />} />
-        <Tile label="Total Purchases" value={inr.format(summary.totalPurchases)} icon={<ShoppingCart className="size-5" />} />
+        <Tile label="Total Sales" value={inr.format(summary.totalSales)} icon={<Receipt className="size-5" />} href="/accounts/sales" />
+        <Tile label="Total Purchases" value={inr.format(summary.totalPurchases)} icon={<ShoppingCart className="size-5" />} href="/accounts/purchases" />
         <Tile
           label="Gross Profit"
           value={inr.format(summary.grossProfit)}
           icon={<TrendingUp className="size-5" />}
           tone={summary.grossProfit >= 0 ? "good" : "bad"}
+          href="/accounts/pnl"
         />
         <Tile
           label="Net Profit"
           value={inr.format(summary.netProfit)}
           icon={<TrendingUp className="size-5" />}
           tone={summary.netProfit >= 0 ? "good" : "bad"}
+          href="/accounts/pnl"
         />
-        <Tile label="Margin %" value={`${summary.marginPercent}%`} icon={<Percent className="size-5" />} />
-        <Tile label="Output GST" value={inr.format(summary.outputGst)} icon={<IndianRupee className="size-5" />} />
-        <Tile label="Input GST" value={inr.format(summary.inputGst)} icon={<IndianRupee className="size-5" />} />
+        <Tile label="Margin %" value={`${summary.marginPercent}%`} icon={<Percent className="size-5" />} href="/accounts/pnl" />
+        <Tile label="Output GST" value={inr.format(summary.outputGst)} icon={<IndianRupee className="size-5" />} href="/accounts/gst-summary" />
+        <Tile label="Input GST" value={inr.format(summary.inputGst)} icon={<IndianRupee className="size-5" />} href="/accounts/gst-summary" />
         <Tile
           label="Net GST"
           value={inr.format(summary.netGst)}
           icon={<Scale className="size-5" />}
           tone={summary.netGst >= 0 ? "bad" : "good"}
+          href="/accounts/gst-summary"
         />
-        <Tile label="Cash Received" value={inr.format(summary.cashReceived)} icon={<ArrowDownRight className="size-5" />} tone="good" />
-        <Tile label="Cash Paid" value={inr.format(summary.cashPaid)} icon={<ArrowUpRight className="size-5" />} tone="bad" />
-        <Tile label="Total Receivables" value={inr.format(summary.totalReceivables)} icon={<TrendingUp className="size-5" />} />
-        <Tile label="Total Payables" value={inr.format(summary.totalPayables)} icon={<TrendingDown className="size-5" />} />
+        <Tile label="Cash Received" value={inr.format(summary.cashReceived)} icon={<ArrowDownRight className="size-5" />} tone="good" href="/accounts/payments?direction=received" />
+        <Tile label="Cash Paid" value={inr.format(summary.cashPaid)} icon={<ArrowUpRight className="size-5" />} tone="bad" href="/accounts/payments?direction=paid" />
+        <Tile label="Total Receivables" value={inr.format(summary.totalReceivables)} icon={<TrendingUp className="size-5" />} href="/accounts/aging" />
+        <Tile label="Total Payables" value={inr.format(summary.totalPayables)} icon={<TrendingDown className="size-5" />} href="/accounts/aging" />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
