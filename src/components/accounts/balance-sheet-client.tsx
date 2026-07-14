@@ -12,9 +12,12 @@ import { subscribeToJournalVouchers } from "@/lib/accounts/journal";
 import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
 import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
 import { subscribeToProductionVouchers } from "@/lib/accounts/production";
+import { subscribeToFixedAssets } from "@/lib/accounts/fixed-assets";
 import { buildGeneralLedger } from "@/lib/accounts/ledger";
 import { computeStockSummary } from "@/lib/accounts/stock";
-import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, ProductionVoucher } from "@/lib/accounts/types";
+import { netBlock, totalAccumulatedDepreciation } from "@/lib/accounts/depreciation";
+import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
+import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, ProductionVoucher, FixedAsset } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -57,6 +60,7 @@ export function BalanceSheetClient() {
   const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
   const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
   const [productionVouchers, setProductionVouchers] = React.useState<ProductionVoucher[]>([]);
+  const [fixedAssets, setFixedAssets] = React.useState<FixedAsset[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToItems(setItems), []);
@@ -68,6 +72,7 @@ export function BalanceSheetClient() {
   React.useEffect(() => subscribeToProductionVouchers(setProductionVouchers), []);
   React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
   React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
+  React.useEffect(() => subscribeToFixedAssets(setFixedAssets), []);
 
   const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes);
   const stockSummary = computeStockSummary(items, purchases, sales, creditNotes, debitNotes, productionVouchers);
@@ -89,9 +94,16 @@ export function BalanceSheetClient() {
   // accounts (one per category) rather than a single fixed one — so these
   // sum every "expense"/"income" account except Purchases/Sales, which are
   // already counted above.
+  // Capital expenditure is excluded here too — it's carried below as Fixed
+  // Assets (Net Block), not expensed against equity; only accumulated
+  // depreciation (subtracted from netProfit below) reduces equity for it.
   const otherExpenseTotal = round2(
-    ledger.filter((a) => a.type === "expense" && a.name !== "Purchases" && a.name !== "Round Off").reduce((s, a) => s + a.balance, 0)
+    ledger
+      .filter((a) => a.type === "expense" && a.name !== "Purchases" && a.name !== "Round Off" && a.name !== CAPITAL_EXPENDITURE_CATEGORY)
+      .reduce((s, a) => s + a.balance, 0)
   );
+  const netBlockValue = netBlock(fixedAssets);
+  const accumulatedDepreciation = totalAccumulatedDepreciation(fixedAssets);
   const otherIncomeTotal = round2(
     ledger.filter((a) => a.type === "income" && a.name !== "Sales").reduce((s, a) => s - a.balance, 0)
   );
@@ -106,7 +118,7 @@ export function BalanceSheetClient() {
 
   // Trading-account adjustment: unsold inventory isn't an expense yet.
   const cogs = round2(purchasesAmt + openingStockValue - closingStockValue);
-  const netProfit = round2(salesAmt - cogs - roundOff + otherIncomeTotal - otherExpenseTotal);
+  const netProfit = round2(salesAmt - cogs - roundOff + otherIncomeTotal - otherExpenseTotal - accumulatedDepreciation);
 
   const assetRows = [
     { label: "Bank", amount: bank },
@@ -116,6 +128,7 @@ export function BalanceSheetClient() {
     ...(inputIgst ? [{ label: "Input IGST Receivable", amount: inputIgst }] : []),
     { label: "Sundry Debtors (customers owe you)", amount: totalDebtors },
     { label: "Closing Stock (Inventory)", amount: closingStockValue },
+    { label: "Fixed Assets (Net Block)", amount: netBlockValue },
   ].filter((r) => r.amount !== 0);
   const totalAssets = round2(assetRows.reduce((s, r) => s + r.amount, 0));
 

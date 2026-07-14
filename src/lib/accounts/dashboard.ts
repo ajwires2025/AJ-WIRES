@@ -1,5 +1,7 @@
-import type { Purchase, Sale, Payment, Expense } from "@/lib/accounts/types";
+import type { Purchase, Sale, Payment, Expense, FixedAsset } from "@/lib/accounts/types";
+import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
 import { inPeriod, monthPeriod, type Period } from "@/lib/accounts/period";
+import { calcDepreciationForPeriod } from "@/lib/accounts/depreciation";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -27,6 +29,7 @@ export function calcDashboardSummary(
   purchases: Purchase[],
   payments: Payment[],
   expenses: Expense[],
+  fixedAssets: FixedAsset[] = [],
   period: Period
 ): DashboardSummary {
   const salesInPeriod = sales.filter((s) => inPeriod(s.invoiceDate, period));
@@ -42,10 +45,15 @@ export function calcDashboardSummary(
   const otherIncome = round2(
     expensesInPeriod.filter((e) => e.direction === "income").reduce((sum, e) => sum + e.taxableValue, 0)
   );
+  // Capital expenditure is capitalized (Fixed Asset), not expensed — only
+  // depreciation reduces net profit here.
   const otherExpenses = round2(
-    expensesInPeriod.filter((e) => e.direction === "expense").reduce((sum, e) => sum + e.taxableValue, 0)
+    expensesInPeriod
+      .filter((e) => e.direction === "expense" && e.category !== CAPITAL_EXPENDITURE_CATEGORY)
+      .reduce((sum, e) => sum + e.taxableValue, 0)
   );
-  const netProfit = round2(grossProfit + otherIncome - otherExpenses);
+  const depreciation = calcDepreciationForPeriod(fixedAssets, period);
+  const netProfit = round2(grossProfit + otherIncome - otherExpenses - depreciation);
 
   const outputGst = round2(salesInPeriod.reduce((sum, s) => sum + s.totalTax, 0));
   const inputGst = round2(purchasesInPeriod.reduce((sum, p) => sum + p.totalTax, 0));

@@ -1,7 +1,7 @@
 import { collection, getDocs } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import { db } from "@/lib/firebase/client";
-import type { Purchase, Sale, JournalVoucher, CreditNote, DebitNote, ProductionVoucher } from "@/lib/accounts/types";
+import type { Purchase, Sale, JournalVoucher, CreditNote, DebitNote, ProductionVoucher, Quotation, PurchaseOrder } from "@/lib/accounts/types";
 
 async function fetchAll<T>(name: string): Promise<T[]> {
   const snap = await getDocs(collection(db, name));
@@ -70,11 +70,47 @@ function flattenProductionConsumedLines(vouchers: ProductionVoucher[]) {
   );
 }
 
+function flattenQuotationItems(quotations: Quotation[]) {
+  return quotations.flatMap((q) =>
+    q.items.map((line) => ({
+      quoteNumber: q.quoteNumber,
+      customerName: q.customerName,
+      ...line,
+    }))
+  );
+}
+
+function flattenPurchaseOrderItems(orders: PurchaseOrder[]) {
+  return orders.flatMap((o) =>
+    o.items.map((line) => ({
+      poNumber: o.poNumber,
+      supplierName: o.supplierName,
+      ...line,
+    }))
+  );
+}
+
 // A flat, one-file backup of every collection — meant as a safety net /
 // hand-off to the CA, not a live sync target. Line items are flattened into
 // their own sheets since a spreadsheet can't hold nested arrays.
 export async function exportAllDataToExcel(): Promise<void> {
-  const [parties, items, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, productionVouchers, remindersLog] = await Promise.all([
+  const [
+    parties,
+    items,
+    purchases,
+    sales,
+    payments,
+    expenses,
+    journalVouchers,
+    creditNotes,
+    debitNotes,
+    productionVouchers,
+    remindersLog,
+    quotations,
+    purchaseOrders,
+    fixedAssets,
+    gstAdjustments,
+  ] = await Promise.all([
     fetchAll("parties"),
     fetchAll("items"),
     fetchAll<Purchase>("purchases"),
@@ -86,6 +122,10 @@ export async function exportAllDataToExcel(): Promise<void> {
     fetchAll<DebitNote>("debitNotes"),
     fetchAll<ProductionVoucher>("productionVouchers"),
     fetchAll("remindersLog"),
+    fetchAll<Quotation>("quotations"),
+    fetchAll<PurchaseOrder>("purchaseOrders"),
+    fetchAll("fixedAssets"),
+    fetchAll("gstAdjustments"),
   ]);
 
   const purchasesFlat = purchases.map(({ items: _items, ...rest }) => rest);
@@ -113,6 +153,12 @@ export async function exportAllDataToExcel(): Promise<void> {
   addSheet("Debit Note Items", flattenDebitNoteItems(debitNotes));
   addSheet("Production Entries", productionVouchers.map(({ consumedLines: _consumedLines, ...rest }) => rest));
   addSheet("Production Consumed Materials", flattenProductionConsumedLines(productionVouchers));
+  addSheet("Quotations", quotations.map(({ items: _items, ...rest }) => rest));
+  addSheet("Quotation Line Items", flattenQuotationItems(quotations));
+  addSheet("Purchase Orders", purchaseOrders.map(({ items: _items, ...rest }) => rest));
+  addSheet("Purchase Order Line Items", flattenPurchaseOrderItems(purchaseOrders));
+  addSheet("Fixed Assets", fixedAssets);
+  addSheet("GST Adjustments", gstAdjustments);
   addSheet("Reminders Log", remindersLog);
 
   const dateStamp = new Date().toISOString().slice(0, 10);

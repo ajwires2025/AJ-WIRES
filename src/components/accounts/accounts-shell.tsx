@@ -85,6 +85,7 @@ const reportNavItems = [
 const setupNavItems = [
   { href: "/accounts/parties", label: "Parties", icon: Users },
   { href: "/accounts/items", label: "Items", icon: Package },
+  { href: "/accounts/fixed-assets", label: "Fixed Assets", icon: Landmark },
   { href: "/accounts/settings", label: "Settings", icon: Settings },
 ];
 

@@ -1,5 +1,7 @@
-import type { Sale, Expense } from "@/lib/accounts/types";
+import type { Sale, Expense, FixedAsset } from "@/lib/accounts/types";
+import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
 import { inPeriod, type Period } from "@/lib/accounts/period";
+import { calcDepreciationForPeriod } from "@/lib/accounts/depreciation";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -21,14 +23,17 @@ export type ProfitAndLoss = {
 
 // GST (CGST/SGST/IGST) is deliberately excluded — it's a pass-through
 // liability/asset, not revenue or expense.
-export function calcProfitAndLoss(sales: Sale[], expenses: Expense[], period: Period): ProfitAndLoss {
+export function calcProfitAndLoss(sales: Sale[], expenses: Expense[], fixedAssets: FixedAsset[] = [], period: Period): ProfitAndLoss {
   const salesInPeriod = sales.filter((s) => inPeriod(s.invoiceDate, period));
   const revenue = round2(salesInPeriod.reduce((sum, s) => sum + s.taxableValue, 0));
   const cogs = round2(salesInPeriod.reduce((sum, s) => sum + s.cogsTotal, 0));
   const grossProfit = round2(revenue - cogs);
   const grossMarginPercent = revenue > 0 ? round2((grossProfit / revenue) * 100) : 0;
 
-  const expensesInPeriod = expenses.filter((e) => inPeriod(e.date, period));
+  // Capital expenditure is excluded here — it's capitalized as a Fixed Asset
+  // rather than expensed immediately; only depreciation (added below) should
+  // reduce profit. Cash Flow still counts the outflow.
+  const expensesInPeriod = expenses.filter((e) => inPeriod(e.date, period) && e.category !== CAPITAL_EXPENDITURE_CATEGORY);
 
   const byCategory = (direction: "expense" | "income"): ExpenseByCategory[] => {
     const totals = new Map<string, number>();
@@ -40,6 +45,9 @@ export function calcProfitAndLoss(sales: Sale[], expenses: Expense[], period: Pe
 
   const otherIncomeByCategory = byCategory("income");
   const expensesByCategory = byCategory("expense");
+  const depreciation = calcDepreciationForPeriod(fixedAssets, period);
+  if (depreciation > 0) expensesByCategory.push({ category: "Depreciation", amount: depreciation });
+
   const otherIncome = round2(otherIncomeByCategory.reduce((s, c) => s + c.amount, 0));
   const totalExpenses = round2(expensesByCategory.reduce((s, c) => s + c.amount, 0));
   const netProfit = round2(grossProfit + otherIncome - totalExpenses);

@@ -400,8 +400,16 @@ export const EXPENSE_CATEGORIES = [
   "Professional Fees",
   "Insurance",
   "Freight & Courier",
+  "Capital Expenditure (Fixed Asset)",
   "Other Expense",
 ];
+
+// The cash still counts as money out in Cash Flow (it really left the
+// business), but this category is excluded from P&L/net-profit expense
+// totals — it's capitalized as a Fixed Asset rather than expensed, and only
+// its depreciation (computed separately) should reduce profit. See
+// src/lib/accounts/depreciation.ts and pnl.ts.
+export const CAPITAL_EXPENDITURE_CATEGORY = "Capital Expenditure (Fixed Asset)";
 
 export const INCOME_CATEGORIES = [
   "Interest Income",
@@ -439,6 +447,61 @@ export type GstAdjustment = {
 };
 
 export type GstAdjustmentInput = Omit<GstAdjustment, "id" | "createdBy" | "createdAt">;
+
+export type DepreciationMethod = "wdv" | "slm";
+
+export const DEPRECIATION_METHOD_LABELS: Record<DepreciationMethod, string> = {
+  wdv: "Written Down Value (WDV)",
+  slm: "Straight Line (SLM)",
+};
+
+export const ASSET_CATEGORIES = [
+  "Plant & Machinery",
+  "Furniture & Fixtures",
+  "Computers & Software",
+  "Vehicles",
+  "Office Equipment",
+  "Building",
+  "Other",
+] as const;
+
+export type AssetCategory = (typeof ASSET_CATEGORIES)[number];
+
+// Standard Income Tax Act (WDV, block-of-assets) rates — working defaults,
+// editable per asset. Verify with your CA before filing.
+export const DEFAULT_DEPRECIATION_RATES: Record<AssetCategory, number> = {
+  "Plant & Machinery": 15,
+  "Furniture & Fixtures": 10,
+  "Computers & Software": 40,
+  "Vehicles": 15,
+  "Office Equipment": 15,
+  "Building": 10,
+  "Other": 15,
+};
+
+export type AssetStatus = "active" | "disposed";
+
+export type FixedAsset = {
+  id: string;
+  assetName: string;
+  category: AssetCategory;
+  purchaseDate: string;
+  purchaseCost: number;
+  vendorName: string;
+  depreciationMethod: DepreciationMethod;
+  depreciationRatePercent: number; // WDV
+  usefulLifeYears: number; // SLM
+  salvageValue: number; // SLM
+  status: AssetStatus;
+  disposalDate: string;
+  disposalValue: number;
+  linkedExpenseId: string;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type FixedAssetInput = Omit<FixedAsset, "id" | "createdBy" | "createdAt">;
 
 export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 

@@ -20,12 +20,13 @@ export function subscribeToExpenses(onChange: (expenses: Expense[]) => void) {
   });
 }
 
-export async function createExpense(input: ExpenseInput, createdBy: string) {
-  await addDoc(expensesCol, {
+export async function createExpense(input: ExpenseInput, createdBy: string): Promise<string> {
+  const docRef = await addDoc(expensesCol, {
     ...input,
     createdBy,
     createdAt: new Date().toISOString(),
   });
+  return docRef.id;
 }
 
 export async function updateExpense(id: string, input: ExpenseInput) {
