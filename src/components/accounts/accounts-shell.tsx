@@ -31,6 +31,8 @@ import {
   FileSignature,
   ClipboardList,
   Percent,
+  Banknote,
+  UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -59,6 +61,7 @@ const primaryNavItems = [
   { href: "/accounts/sales", label: "Sales", icon: Receipt },
   { href: "/accounts/payments", label: "Payments", icon: Wallet },
   { href: "/accounts/expenses", label: "Expenses", icon: ReceiptText },
+  { href: "/accounts/payroll", label: "Payroll", icon: Banknote },
 ];
 
 const voucherNavItems = [
@@ -87,6 +90,7 @@ const reportNavItems = [
 const setupNavItems = [
   { href: "/accounts/parties", label: "Parties", icon: Users },
   { href: "/accounts/items", label: "Items", icon: Package },
+  { href: "/accounts/employees", label: "Employees", icon: UsersRound },
   { href: "/accounts/fixed-assets", label: "Fixed Assets", icon: Landmark },
   { href: "/accounts/settings", label: "Settings", icon: Settings },
 ];

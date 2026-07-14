@@ -1,4 +1,4 @@
-import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, TdsChallan, LedgerAccountType } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, TdsChallan, Payslip, StatutoryPayment, LedgerAccountType } from "@/lib/accounts/types";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -38,6 +38,9 @@ const FIXED_ACCOUNTS: { name: string; type: LedgerAccountType }[] = [
   { name: "Round Off", type: "expense" },
   { name: "TDS Payable", type: "liability" },
   { name: "TDS Receivable", type: "asset" },
+  { name: "PF Payable", type: "liability" },
+  { name: "ESI Payable", type: "liability" },
+  { name: "Professional Tax Payable", type: "liability" },
 ];
 
 function post(
@@ -73,7 +76,9 @@ export function buildGeneralLedger(
   journalVouchers: JournalVoucher[] = [],
   creditNotes: CreditNote[] = [],
   debitNotes: DebitNote[] = [],
-  tdsChallans: TdsChallan[] = []
+  tdsChallans: TdsChallan[] = [],
+  payslips: Payslip[] = [],
+  statutoryPayments: StatutoryPayment[] = []
 ): LedgerAccount[] {
   const ledgers = new Map<string, LedgerAccount>();
   for (const acc of FIXED_ACCOUNTS) {
@@ -192,6 +197,38 @@ export function buildGeneralLedger(
     const narration = `TDS challan (${challan.section}) — ${challan.quarter}`;
     post(ledgers, "TDS Payable", "liability", { date: challan.date, voucherType: "Payment", refNumber: challan.challanSerialNumber, narration, debit: challan.amount, credit: 0 });
     post(ledgers, "Bank", "asset", { date: challan.date, voucherType: "Payment", refNumber: challan.challanSerialNumber, narration, debit: 0, credit: challan.amount });
+  }
+
+  // Accrued in full the moment a payslip exists (like a Purchase bill) —
+  // the employee's net pay posts to their own party account so the existing
+  // Payments mechanism (linkedType: "payslip") clears it exactly like a
+  // supplier bill, regardless of whether it's actually been paid yet.
+  for (const p of payslips) {
+    const narration = `Salary for ${p.month} — ${p.employeeName}`;
+    const totalCost = round2(p.grossSalary + p.pfEmployer + p.esiEmployer - p.otherDeductions);
+    post(ledgers, "Salaries & Wages", "expense", { date: `${p.month}-01`, voucherType: "Payment", refNumber: p.month, narration, debit: totalCost, credit: 0 });
+    if (p.pfEmployee || p.pfEmployer) {
+      post(ledgers, "PF Payable", "liability", { date: `${p.month}-01`, voucherType: "Payment", refNumber: p.month, narration, debit: 0, credit: round2(p.pfEmployee + p.pfEmployer) });
+    }
+    if (p.esiEmployee || p.esiEmployer) {
+      post(ledgers, "ESI Payable", "liability", { date: `${p.month}-01`, voucherType: "Payment", refNumber: p.month, narration, debit: 0, credit: round2(p.esiEmployee + p.esiEmployer) });
+    }
+    if (p.professionalTax) {
+      post(ledgers, "Professional Tax Payable", "liability", { date: `${p.month}-01`, voucherType: "Payment", refNumber: p.month, narration, debit: 0, credit: p.professionalTax });
+    }
+    if (p.tdsSalary) {
+      post(ledgers, "TDS Payable", "liability", { date: `${p.month}-01`, voucherType: "Payment", refNumber: p.month, narration, debit: 0, credit: p.tdsSalary });
+    }
+    post(ledgers, p.employeeName, "party", { date: `${p.month}-01`, voucherType: "Payment", refNumber: p.month, narration, debit: 0, credit: p.netSalary });
+  }
+
+  // Depositing PF/ESI/Professional Tax clears the corresponding liability —
+  // always via bank, same as a TDS challan.
+  for (const sp of statutoryPayments) {
+    const accountName = sp.type === "PF" ? "PF Payable" : sp.type === "ESI" ? "ESI Payable" : "Professional Tax Payable";
+    const narration = `${sp.type} deposit — ${sp.period}`;
+    post(ledgers, accountName, "liability", { date: sp.date, voucherType: "Payment", refNumber: sp.referenceNumber, narration, debit: sp.amount, credit: 0 });
+    post(ledgers, "Bank", "asset", { date: sp.date, voucherType: "Payment", refNumber: sp.referenceNumber, narration, debit: 0, credit: sp.amount });
   }
 
   return Array.from(ledgers.values())

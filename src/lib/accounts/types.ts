@@ -317,7 +317,7 @@ export type DebitNoteInput = Omit<DebitNote, "id" | "createdBy" | "createdAt">;
 
 export type PaymentDirection = "received" | "paid";
 export type PaymentMethod = "bank" | "cash" | "upi" | "cheque";
-export type LinkedBillType = "sale" | "purchase";
+export type LinkedBillType = "sale" | "purchase" | "payslip";
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   bank: "Bank Transfer",
@@ -521,6 +521,7 @@ export type FixedAssetInput = Omit<FixedAsset, "id" | "createdBy" | "createdAt">
 // defaults (Finance Act rates change and depend on PAN availability/
 // thresholds) — verify with your CA before relying on them.
 export const TDS_SECTIONS = [
+  "192B - Salary",
   "194C - Contractors",
   "194H - Commission/Brokerage",
   "194I - Rent",
@@ -531,7 +532,10 @@ export const TDS_SECTIONS = [
 
 export type TdsSection = (typeof TDS_SECTIONS)[number];
 
+// Salary TDS (192B) has no flat rate — it's slab/regime based per employee,
+// so it's entered manually on the payslip rather than computed here.
 export const DEFAULT_TDS_RATES: Record<TdsSection, number> = {
+  "192B - Salary": 0,
   "194C - Contractors": 1,
   "194H - Commission/Brokerage": 5,
   "194I - Rent": 10,
@@ -557,6 +561,97 @@ export type TdsChallan = {
 };
 
 export type TdsChallanInput = Omit<TdsChallan, "id" | "createdBy" | "createdAt">;
+
+export type EmployeeStatus = "active" | "inactive";
+
+// Salary structure + statutory flags. PF/ESI rates are working defaults
+// (PF wage-ceiling rules and ESI's ₹21,000 gross threshold aren't modeled —
+// verify applicability and exact amounts with your CA).
+export type Employee = {
+  id: string;
+  name: string;
+  employeeCode: string;
+  designation: string;
+  department: string;
+  dateOfJoining: string;
+  dateOfLeaving: string;
+  status: EmployeeStatus;
+  panNumber: string;
+  bankAccountNumber: string;
+  bankIfsc: string;
+  basic: number;
+  hra: number;
+  conveyance: number;
+  specialAllowance: number;
+  pfApplicable: boolean;
+  pfRatePercent: number;
+  esiApplicable: boolean;
+  esiEmployeeRatePercent: number;
+  esiEmployerRatePercent: number;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type EmployeeInput = Omit<Employee, "id" | "createdBy" | "createdAt">;
+
+// One per employee per month. Generated in a batch from each active
+// Employee's current salary structure ("Generate Payroll"), then editable
+// per employee (bonus, unpaid-leave deduction, TDS, etc). amountPaid/
+// paymentStatus follow the same pattern as Purchase/Sale — cleared via the
+// existing Payments mechanism (linkedType: "payslip").
+export type Payslip = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  month: string;
+  basic: number;
+  hra: number;
+  conveyance: number;
+  specialAllowance: number;
+  otherAllowances: number;
+  grossSalary: number;
+  pfEmployee: number;
+  pfEmployer: number;
+  esiEmployee: number;
+  esiEmployer: number;
+  professionalTax: number;
+  tdsSalary: number;
+  otherDeductions: number;
+  netSalary: number;
+  amountPaid: number;
+  paymentStatus: PaymentStatus;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type PayslipInput = Omit<Payslip, "id" | "createdBy" | "createdAt">;
+
+export type StatutoryPaymentType = "PF" | "ESI" | "PT";
+
+export const STATUTORY_PAYMENT_TYPE_LABELS: Record<StatutoryPaymentType, string> = {
+  PF: "Provident Fund",
+  ESI: "ESI",
+  PT: "Professional Tax",
+};
+
+// A deposit against PF/ESI/Professional Tax withheld from payslips —
+// reduces the corresponding payable liability, same role as a TdsChallan
+// but for these three statutory dues instead of income-tax TDS.
+export type StatutoryPayment = {
+  id: string;
+  date: string;
+  type: StatutoryPaymentType;
+  amount: number;
+  referenceNumber: string;
+  period: string;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type StatutoryPaymentInput = Omit<StatutoryPayment, "id" | "createdBy" | "createdAt">;
 
 export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 

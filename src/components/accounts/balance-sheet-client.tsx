@@ -14,11 +14,13 @@ import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
 import { subscribeToProductionVouchers } from "@/lib/accounts/production";
 import { subscribeToFixedAssets } from "@/lib/accounts/fixed-assets";
 import { subscribeToTdsChallans } from "@/lib/accounts/tds-challans";
+import { subscribeToPayslips } from "@/lib/accounts/payslips";
+import { subscribeToStatutoryPayments } from "@/lib/accounts/statutory-payments";
 import { buildGeneralLedger } from "@/lib/accounts/ledger";
 import { computeStockSummary } from "@/lib/accounts/stock";
 import { netBlock, totalAccumulatedDepreciation } from "@/lib/accounts/depreciation";
 import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
-import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, ProductionVoucher, FixedAsset, TdsChallan } from "@/lib/accounts/types";
+import type { Party, Item, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, ProductionVoucher, FixedAsset, TdsChallan, Payslip, StatutoryPayment } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -63,6 +65,8 @@ export function BalanceSheetClient() {
   const [productionVouchers, setProductionVouchers] = React.useState<ProductionVoucher[]>([]);
   const [fixedAssets, setFixedAssets] = React.useState<FixedAsset[]>([]);
   const [tdsChallans, setTdsChallans] = React.useState<TdsChallan[]>([]);
+  const [payslips, setPayslips] = React.useState<Payslip[]>([]);
+  const [statutoryPayments, setStatutoryPayments] = React.useState<StatutoryPayment[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToItems(setItems), []);
@@ -76,8 +80,10 @@ export function BalanceSheetClient() {
   React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
   React.useEffect(() => subscribeToFixedAssets(setFixedAssets), []);
   React.useEffect(() => subscribeToTdsChallans(setTdsChallans), []);
+  React.useEffect(() => subscribeToPayslips(setPayslips), []);
+  React.useEffect(() => subscribeToStatutoryPayments(setStatutoryPayments), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, tdsChallans);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, tdsChallans, payslips, statutoryPayments);
   const stockSummary = computeStockSummary(items, purchases, sales, creditNotes, debitNotes, productionVouchers);
 
   const find = (name: string) => ledger.find((a) => a.name === name);
@@ -94,6 +100,9 @@ export function BalanceSheetClient() {
   const roundOff = find("Round Off")?.balance ?? 0; // Dr-positive; negative means net credit (income)
   const tdsPayable = -(find("TDS Payable")?.balance ?? 0);
   const tdsReceivable = find("TDS Receivable")?.balance ?? 0;
+  const pfPayable = -(find("PF Payable")?.balance ?? 0);
+  const esiPayable = -(find("ESI Payable")?.balance ?? 0);
+  const ptPayable = -(find("Professional Tax Payable")?.balance ?? 0);
 
   // Day-to-day expense/income entries post to dynamic, user-named ledger
   // accounts (one per category) rather than a single fixed one — so these
@@ -142,8 +151,11 @@ export function BalanceSheetClient() {
     { label: "Output CGST Payable", amount: outputCgst },
     { label: "Output SGST Payable", amount: outputSgst },
     ...(outputIgst ? [{ label: "Output IGST Payable", amount: outputIgst }] : []),
-    { label: "Sundry Creditors (you owe suppliers)", amount: totalCreditors },
+    { label: "Sundry Creditors (suppliers & unpaid salaries)", amount: totalCreditors },
     { label: "TDS Payable", amount: tdsPayable },
+    { label: "PF Payable", amount: pfPayable },
+    { label: "ESI Payable", amount: esiPayable },
+    { label: "Professional Tax Payable", amount: ptPayable },
   ].filter((r) => r.amount !== 0);
   const totalLiabilities = round2(liabilityRows.reduce((s, r) => s + r.amount, 0));
 

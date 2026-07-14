@@ -11,7 +11,13 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { derivePaymentStatus } from "@/lib/accounts/gst-calc";
-import type { Payment, PaymentInput } from "@/lib/accounts/types";
+import type { Payment, PaymentInput, LinkedBillType } from "@/lib/accounts/types";
+
+const LINKED_COLLECTION: Record<LinkedBillType, string> = {
+  sale: "sales",
+  purchase: "purchases",
+  payslip: "payslips",
+};
 
 const paymentsCol = collection(db, "payments");
 
@@ -22,15 +28,16 @@ export function subscribeToPayments(onChange: (payments: Payment[]) => void) {
   });
 }
 
-async function applyAmountDelta(linkedType: "sale" | "purchase", linkedId: string, delta: number) {
-  const collectionName = linkedType === "sale" ? "sales" : "purchases";
+async function applyAmountDelta(linkedType: LinkedBillType, linkedId: string, delta: number) {
+  const collectionName = LINKED_COLLECTION[linkedType];
   const amountField = linkedType === "sale" ? "amountReceived" : "amountPaid";
   const billRef = doc(db, collectionName, linkedId);
   const snap = await getDoc(billRef);
   if (!snap.exists()) return;
 
   const data = snap.data();
-  const grandTotal = data.grandTotal as number;
+  // Payslips use netSalary as their "total owed" figure instead of grandTotal.
+  const grandTotal = (linkedType === "payslip" ? data.netSalary : data.grandTotal) as number;
   const currentAmount = (data[amountField] as number) ?? 0;
   const newAmount = Math.max(0, currentAmount + delta);
   const paymentStatus = derivePaymentStatus(grandTotal, newAmount);

@@ -105,6 +105,17 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // Payroll: employee register, monthly payslips, and PF/ESI/PT deposits.
+    match /employees/{employeeId} {
+      allow read, write: if isStaff();
+    }
+    match /payslips/{payslipId} {
+      allow read, write: if isStaff();
+    }
+    match /statutoryPayments/{paymentId} {
+      allow read, write: if isStaff();
+    }
+
     // Log of every reminder email sent (or attempted) — written by the
     // server-side send API using the Admin SDK, but readable here so the UI
     // can show history.

@@ -1,7 +1,9 @@
-import type { Sale, Expense, FixedAsset } from "@/lib/accounts/types";
+import type { Sale, Expense, FixedAsset, Payslip } from "@/lib/accounts/types";
 import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
 import { inPeriod, type Period } from "@/lib/accounts/period";
 import { calcDepreciationForPeriod } from "@/lib/accounts/depreciation";
+
+const SALARIES_CATEGORY = "Salaries & Wages";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -23,7 +25,13 @@ export type ProfitAndLoss = {
 
 // GST (CGST/SGST/IGST) is deliberately excluded — it's a pass-through
 // liability/asset, not revenue or expense.
-export function calcProfitAndLoss(sales: Sale[], expenses: Expense[], fixedAssets: FixedAsset[] = [], period: Period): ProfitAndLoss {
+export function calcProfitAndLoss(
+  sales: Sale[],
+  expenses: Expense[],
+  fixedAssets: FixedAsset[] = [],
+  payslips: Payslip[] = [],
+  period: Period
+): ProfitAndLoss {
   const salesInPeriod = sales.filter((s) => inPeriod(s.invoiceDate, period));
   const revenue = round2(salesInPeriod.reduce((sum, s) => sum + s.taxableValue, 0));
   const cogs = round2(salesInPeriod.reduce((sum, s) => sum + s.cogsTotal, 0));
@@ -47,6 +55,20 @@ export function calcProfitAndLoss(sales: Sale[], expenses: Expense[], fixedAsset
   const expensesByCategory = byCategory("expense");
   const depreciation = calcDepreciationForPeriod(fixedAssets, period);
   if (depreciation > 0) expensesByCategory.push({ category: "Depreciation", amount: depreciation });
+
+  // Payroll cost (gross + employer PF/ESI, net of other deductions) merges
+  // into the same "Salaries & Wages" line as any manually-logged Expense
+  // under that category — same real-world GL account either way.
+  const payrollCost = round2(
+    payslips
+      .filter((p) => inPeriod(`${p.month}-01`, period))
+      .reduce((sum, p) => sum + p.grossSalary + p.pfEmployer + p.esiEmployer - p.otherDeductions, 0)
+  );
+  if (payrollCost > 0) {
+    const existing = expensesByCategory.find((c) => c.category === SALARIES_CATEGORY);
+    if (existing) existing.amount = round2(existing.amount + payrollCost);
+    else expensesByCategory.push({ category: SALARIES_CATEGORY, amount: payrollCost });
+  }
 
   const otherIncome = round2(otherIncomeByCategory.reduce((s, c) => s + c.amount, 0));
   const totalExpenses = round2(expensesByCategory.reduce((s, c) => s + c.amount, 0));

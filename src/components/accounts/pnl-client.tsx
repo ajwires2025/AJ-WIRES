@@ -13,11 +13,12 @@ import {
 import { subscribeToSales } from "@/lib/accounts/sales";
 import { subscribeToExpenses } from "@/lib/accounts/expenses";
 import { subscribeToFixedAssets } from "@/lib/accounts/fixed-assets";
+import { subscribeToPayslips } from "@/lib/accounts/payslips";
 import { calcProfitAndLoss } from "@/lib/accounts/pnl";
 import { downloadCsv } from "@/lib/accounts/csv";
 import { currentMonthKey, lastMonthKeys, monthPeriod, financialYearPeriod, type Period } from "@/lib/accounts/period";
 import { currentFinancialYearKey } from "@/lib/accounts/invoice-number";
-import type { Sale, Expense, FixedAsset } from "@/lib/accounts/types";
+import type { Sale, Expense, FixedAsset, Payslip } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -34,15 +35,17 @@ export function PnlClient() {
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [fixedAssets, setFixedAssets] = React.useState<FixedAsset[]>([]);
+  const [payslips, setPayslips] = React.useState<Payslip[]>([]);
   const [periodMode, setPeriodMode] = React.useState<"month" | "fy">("month");
   const [monthKey, setMonthKey] = React.useState(currentMonthKey());
 
   React.useEffect(() => subscribeToSales(setSales), []);
   React.useEffect(() => subscribeToExpenses(setExpenses), []);
   React.useEffect(() => subscribeToFixedAssets(setFixedAssets), []);
+  React.useEffect(() => subscribeToPayslips(setPayslips), []);
 
   const period: Period = periodMode === "fy" ? financialYearPeriod() : monthPeriod(monthKey);
-  const pnl = calcProfitAndLoss(sales, expenses, fixedAssets, period);
+  const pnl = calcProfitAndLoss(sales, expenses, fixedAssets, payslips, period);
   const monthOptions = lastMonthKeys(12).map((key) => ({ key, label: monthPeriod(key).label }));
 
   const handleExport = () => {

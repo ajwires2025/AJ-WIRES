@@ -11,8 +11,10 @@ import { subscribeToJournalVouchers } from "@/lib/accounts/journal";
 import { subscribeToCreditNotes } from "@/lib/accounts/credit-notes";
 import { subscribeToDebitNotes } from "@/lib/accounts/debit-notes";
 import { subscribeToTdsChallans } from "@/lib/accounts/tds-challans";
+import { subscribeToPayslips } from "@/lib/accounts/payslips";
+import { subscribeToStatutoryPayments } from "@/lib/accounts/statutory-payments";
 import { buildGeneralLedger, type LedgerAccountType } from "@/lib/accounts/ledger";
-import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, TdsChallan } from "@/lib/accounts/types";
+import type { Party, Purchase, Sale, Payment, Expense, JournalVoucher, CreditNote, DebitNote, TdsChallan, Payslip, StatutoryPayment } from "@/lib/accounts/types";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
@@ -39,6 +41,8 @@ export function TrialBalanceClient() {
   const [creditNotes, setCreditNotes] = React.useState<CreditNote[]>([]);
   const [debitNotes, setDebitNotes] = React.useState<DebitNote[]>([]);
   const [tdsChallans, setTdsChallans] = React.useState<TdsChallan[]>([]);
+  const [payslips, setPayslips] = React.useState<Payslip[]>([]);
+  const [statutoryPayments, setStatutoryPayments] = React.useState<StatutoryPayment[]>([]);
 
   React.useEffect(() => subscribeToParties(setParties), []);
   React.useEffect(() => subscribeToPurchases(setPurchases), []);
@@ -49,8 +53,10 @@ export function TrialBalanceClient() {
   React.useEffect(() => subscribeToCreditNotes(setCreditNotes), []);
   React.useEffect(() => subscribeToDebitNotes(setDebitNotes), []);
   React.useEffect(() => subscribeToTdsChallans(setTdsChallans), []);
+  React.useEffect(() => subscribeToPayslips(setPayslips), []);
+  React.useEffect(() => subscribeToStatutoryPayments(setStatutoryPayments), []);
 
-  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, tdsChallans);
+  const ledger = buildGeneralLedger(parties, purchases, sales, payments, expenses, journalVouchers, creditNotes, debitNotes, tdsChallans, payslips, statutoryPayments);
   const totalDebit = round2(ledger.reduce((s, a) => s + (a.balance > 0 ? a.balance : 0), 0));
   const totalCredit = round2(ledger.reduce((s, a) => s + (a.balance < 0 ? -a.balance : 0), 0));
   const inBalance = Math.abs(totalDebit - totalCredit) < 0.01;

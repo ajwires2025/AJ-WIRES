@@ -1,4 +1,4 @@
-import type { Purchase, Sale, Payment, Expense, FixedAsset, TdsChallan } from "@/lib/accounts/types";
+import type { Purchase, Sale, Payment, Expense, FixedAsset, TdsChallan, Payslip } from "@/lib/accounts/types";
 import { CAPITAL_EXPENDITURE_CATEGORY } from "@/lib/accounts/types";
 import { inPeriod, monthPeriod, type Period } from "@/lib/accounts/period";
 import { calcDepreciationForPeriod } from "@/lib/accounts/depreciation";
@@ -31,6 +31,7 @@ export function calcDashboardSummary(
   expenses: Expense[],
   fixedAssets: FixedAsset[] = [],
   tdsChallans: TdsChallan[] = [],
+  payslips: Payslip[] = [],
   period: Period
 ): DashboardSummary {
   const salesInPeriod = sales.filter((s) => inPeriod(s.invoiceDate, period));
@@ -38,6 +39,7 @@ export function calcDashboardSummary(
   const paymentsInPeriod = payments.filter((p) => inPeriod(p.paymentDate, period));
   const expensesInPeriod = expenses.filter((e) => inPeriod(e.date, period));
   const challansInPeriod = tdsChallans.filter((c) => inPeriod(c.date, period));
+  const payslipsInPeriod = payslips.filter((p) => inPeriod(`${p.month}-01`, period));
 
   const totalSales = round2(salesInPeriod.reduce((sum, s) => sum + s.taxableValue, 0));
   const totalPurchases = round2(purchasesInPeriod.reduce((sum, p) => sum + p.taxableValue, 0));
@@ -55,7 +57,8 @@ export function calcDashboardSummary(
       .reduce((sum, e) => sum + e.taxableValue, 0)
   );
   const depreciation = calcDepreciationForPeriod(fixedAssets, period);
-  const netProfit = round2(grossProfit + otherIncome - otherExpenses - depreciation);
+  const payrollCost = round2(payslipsInPeriod.reduce((sum, p) => sum + p.grossSalary + p.pfEmployer + p.esiEmployer - p.otherDeductions, 0));
+  const netProfit = round2(grossProfit + otherIncome - otherExpenses - depreciation - payrollCost);
 
   const outputGst = round2(salesInPeriod.reduce((sum, s) => sum + s.totalTax, 0));
   const inputGst = round2(purchasesInPeriod.reduce((sum, p) => sum + p.totalTax, 0));
