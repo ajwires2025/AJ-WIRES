@@ -28,6 +28,8 @@ import {
   FilePlus,
   Factory,
   FileSpreadsheet,
+  FileSignature,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "firebase/auth";
@@ -59,6 +61,8 @@ const primaryNavItems = [
 ];
 
 const voucherNavItems = [
+  { href: "/accounts/quotations", label: "Quotations", icon: FileSignature },
+  { href: "/accounts/purchase-orders", label: "Purchase Orders", icon: ClipboardList },
   { href: "/accounts/credit-notes", label: "Credit Notes", icon: FileMinus },
   { href: "/accounts/debit-notes", label: "Debit Notes", icon: FilePlus },
   { href: "/accounts/journal-vouchers", label: "Journal Vouchers", icon: BookOpen },

@@ -87,6 +87,14 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // Pre-invoice offers to customers / pre-bill commitments to suppliers.
+    match /quotations/{quotationId} {
+      allow read, write: if isStaff();
+    }
+    match /purchaseOrders/{poId} {
+      allow read, write: if isStaff();
+    }
+
     // Log of every reminder email sent (or attempted) — written by the
     // server-side send API using the Admin SDK, but readable here so the UI
     // can show history.

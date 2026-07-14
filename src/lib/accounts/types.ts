@@ -145,6 +145,44 @@ export type Purchase = {
 
 export type PurchaseInput = Omit<Purchase, "id" | "createdBy" | "createdAt">;
 
+export type PurchaseOrderStatus = "draft" | "sent" | "confirmed" | "cancelled" | "converted";
+
+export const PURCHASE_ORDER_STATUS_LABELS: Record<PurchaseOrderStatus, string> = {
+  draft: "Draft",
+  sent: "Sent to Supplier",
+  confirmed: "Confirmed",
+  cancelled: "Cancelled",
+  converted: "Converted to Purchase",
+};
+
+// Pre-bill commitment to a supplier. Mirrors Purchase's line-item/GST shape
+// so converting one into the other is a straight copy, but carries no
+// amountPaid/paymentStatus — nothing is owed until it becomes a real bill.
+export type PurchaseOrder = {
+  id: string;
+  poNumber: string;
+  poDate: string;
+  expectedDate: string;
+  supplierId: string;
+  supplierName: string;
+  placeOfSupplyStateCode: string;
+  items: BillItemLine[];
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  roundOff: number;
+  grandTotal: number;
+  status: PurchaseOrderStatus;
+  convertedPurchaseId: string;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type PurchaseOrderInput = Omit<PurchaseOrder, "id" | "createdBy" | "createdAt">;
+
 export type SaleItemLine = BillItemLine & {
   costPrice: number;
   lineMargin: number;
@@ -179,6 +217,45 @@ export type Sale = {
 };
 
 export type SaleInput = Omit<Sale, "id" | "createdBy" | "createdAt">;
+
+export type QuotationStatus = "draft" | "sent" | "accepted" | "rejected" | "expired" | "converted";
+
+export const QUOTATION_STATUS_LABELS: Record<QuotationStatus, string> = {
+  draft: "Draft",
+  sent: "Sent to Customer",
+  accepted: "Accepted",
+  rejected: "Rejected",
+  expired: "Expired",
+  converted: "Converted to Invoice",
+};
+
+// Pre-invoice offer to a customer. Mirrors Sale's line-item/GST/margin shape
+// so converting one into the other is a straight copy, but carries no
+// amountReceived/paymentStatus — nothing is owed until it becomes a real invoice.
+export type Quotation = {
+  id: string;
+  quoteNumber: string;
+  quoteDate: string;
+  validUntil: string;
+  customerId: string;
+  customerName: string;
+  placeOfSupplyStateCode: string;
+  items: SaleItemLine[];
+  taxableValue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  roundOff: number;
+  grandTotal: number;
+  status: QuotationStatus;
+  convertedSaleId: string;
+  notes: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type QuotationInput = Omit<Quotation, "id" | "createdBy" | "createdAt">;
 
 // Sales return / post-invoice reduction issued to a customer. Does not
 // modify the original invoice (keeps its numbering and figures intact for
