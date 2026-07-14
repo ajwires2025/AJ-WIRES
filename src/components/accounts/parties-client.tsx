@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Search, Pencil, Trash2, Users } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search, Pencil, Trash2, Users, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -137,29 +138,36 @@ export function PartiesClient({ user }: { user: SessionUser }) {
                   {inr.format(party.openingBalance || 0)}
                 </p>
               </div>
-              {canEdit && (
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      setEditingParty(party);
-                      setFormOpen(true);
-                    }}
-                  >
-                    <Pencil className="size-3.5" /> Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 text-destructive hover:bg-destructive/10"
-                    onClick={() => setDeletingParty(party)}
-                  >
-                    <Trash2 className="size-3.5" /> Delete
-                  </Button>
-                </div>
-              )}
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1" asChild>
+                  <Link href={`/accounts/parties/${party.id}/statement`}>
+                    <FileText className="size-3.5" /> Statement
+                  </Link>
+                </Button>
+                {canEdit && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setEditingParty(party);
+                        setFormOpen(true);
+                      }}
+                    >
+                      <Pencil className="size-3.5" /> Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeletingParty(party)}
+                    >
+                      <Trash2 className="size-3.5" /> Delete
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           ))
         )}
@@ -176,7 +184,7 @@ export function PartiesClient({ user }: { user: SessionUser }) {
                 <th className="px-4 py-3 text-left">GSTIN</th>
                 <th className="px-4 py-3 text-left">Contact</th>
                 <th className="px-4 py-3 text-right">Opening balance</th>
-                {canEdit && <th className="px-4 py-3 text-right">Actions</th>}
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -211,30 +219,37 @@ export function PartiesClient({ user }: { user: SessionUser }) {
                     <td className="px-4 py-3 text-right tabular-nums text-foreground">
                       {inr.format(party.openingBalance || 0)}
                     </td>
-                    {canEdit && (
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingParty(party);
-                              setFormOpen(true);
-                            }}
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className="text-destructive hover:bg-destructive/10"
-                            onClick={() => setDeletingParty(party)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon-sm" variant="ghost" asChild title="Statement of account">
+                          <Link href={`/accounts/parties/${party.id}/statement`}>
+                            <FileText className="size-4" />
+                          </Link>
+                        </Button>
+                        {canEdit && (
+                          <>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingParty(party);
+                                setFormOpen(true);
+                              }}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              className="text-destructive hover:bg-destructive/10"
+                              onClick={() => setDeletingParty(party)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}

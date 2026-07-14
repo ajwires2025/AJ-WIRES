@@ -158,7 +158,7 @@ export function AccountsShell({
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <header className="border-b border-border bg-navy">
+      <header className="border-b border-border bg-navy print:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
           <div className="flex shrink-0 items-center gap-2 text-white">
             <ShieldCheck className="size-5 shrink-0 text-gold" />
@@ -240,7 +240,7 @@ export function AccountsShell({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:p-0">{children}</main>
     </div>
   );
 }
