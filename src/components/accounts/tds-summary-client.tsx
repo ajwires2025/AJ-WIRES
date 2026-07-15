@@ -53,7 +53,7 @@ export function TdsSummaryClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (challan: TdsChallan) => {
     try {
-      await deleteTdsChallan(challan.id);
+      await deleteTdsChallan(challan.id, user.uid, user.name);
       toast.success("Challan deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { derivePaymentStatus } from "@/lib/accounts/gst-calc";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { Payment, PaymentInput, LinkedBillType } from "@/lib/accounts/types";
 
 const LINKED_COLLECTION: Record<LinkedBillType, string> = {
@@ -58,9 +59,16 @@ export async function createPayment(input: PaymentInput, createdBy: string): Pro
   return docRef.id;
 }
 
-export async function deletePayment(payment: Payment) {
+export async function deletePayment(payment: Payment, deletedBy: string, deletedByName: string) {
   await deleteDoc(doc(db, "payments", payment.id));
   await applyAmountDelta(payment.linkedType, payment.linkedId, -payment.amount);
+  await logDeletion({
+    collectionName: "payments",
+    recordId: payment.id,
+    summary: `${payment.direction === "received" ? "Received from" : "Paid to"} ${payment.partyName} — ₹${payment.amount} (${payment.linkedNumber})`,
+    deletedBy,
+    deletedByName,
+  });
 }
 
 export async function setPaymentReconciled(paymentId: string, reconciled: boolean) {

@@ -62,7 +62,7 @@ export function PartiesClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (party: Party) => {
     try {
-      await deleteParty(party.id);
+      await deleteParty(party.id, user.uid, user.name);
       toast.success("Party deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

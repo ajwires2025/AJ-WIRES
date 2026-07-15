@@ -1,5 +1,6 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { Employee, EmployeeInput } from "@/lib/accounts/types";
 
 const employeesCol = collection(db, "employees");
@@ -24,6 +25,15 @@ export async function updateEmployee(id: string, input: EmployeeInput) {
   await updateDoc(doc(db, "employees", id), { ...input });
 }
 
-export async function deleteEmployee(id: string) {
+export async function deleteEmployee(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "employees", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "employees", id));
+  await logDeletion({
+    collectionName: "employees",
+    recordId: id,
+    summary: data ? `${data.name} (${data.employeeCode || "no code"})` : id,
+    deletedBy,
+    deletedByName,
+  });
 }

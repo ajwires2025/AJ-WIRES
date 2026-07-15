@@ -61,7 +61,7 @@ export function ExpensesClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (expense: Expense) => {
     try {
-      await deleteExpense(expense.id);
+      await deleteExpense(expense.id, user.uid, user.name);
       toast.success("Deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

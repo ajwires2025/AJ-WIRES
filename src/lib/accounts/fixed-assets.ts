@@ -1,6 +1,7 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { createExpense } from "@/lib/accounts/expenses";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import { CAPITAL_EXPENDITURE_CATEGORY, type FixedAsset, type FixedAssetInput } from "@/lib/accounts/types";
 import type { PaymentMethod } from "@/lib/accounts/types";
 
@@ -62,6 +63,15 @@ export async function updateFixedAsset(id: string, input: FixedAssetInput) {
   await updateDoc(doc(db, "fixedAssets", id), { ...input });
 }
 
-export async function deleteFixedAsset(id: string) {
+export async function deleteFixedAsset(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "fixedAssets", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "fixedAssets", id));
+  await logDeletion({
+    collectionName: "fixedAssets",
+    recordId: id,
+    summary: data ? `${data.assetName} — ₹${data.purchaseCost}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }

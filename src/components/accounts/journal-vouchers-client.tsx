@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/accounts/confirm-delete-dialog";
 import { subscribeToJournalVouchers, deleteJournalVoucher } from "@/lib/accounts/journal";
 import type { JournalVoucher } from "@/lib/accounts/types";
+import type { SessionUser } from "@/lib/firebase/session";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
-export function JournalVouchersClient() {
+export function JournalVouchersClient({ user }: { user: SessionUser }) {
   const [vouchers, setVouchers] = React.useState<JournalVoucher[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [expanded, setExpanded] = React.useState<string | null>(null);
@@ -27,7 +28,7 @@ export function JournalVouchersClient() {
 
   const handleDelete = async (voucher: JournalVoucher) => {
     try {
-      await deleteJournalVoucher(voucher.id);
+      await deleteJournalVoucher(voucher.id, user.uid, user.name);
       toast.success("Voucher deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

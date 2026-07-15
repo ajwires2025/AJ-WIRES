@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase/client";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { Purchase, PurchaseInput } from "@/lib/accounts/types";
 
 const purchasesCol = collection(db, "purchases");
@@ -40,8 +41,17 @@ export async function updatePurchase(id: string, input: PurchaseInput) {
   await updateDoc(doc(db, "purchases", id), { ...input });
 }
 
-export async function deletePurchase(id: string) {
+export async function deletePurchase(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "purchases", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "purchases", id));
+  await logDeletion({
+    collectionName: "purchases",
+    recordId: id,
+    summary: data ? `Bill ${data.billNumber} — ${data.supplierName} — ₹${data.grandTotal}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }
 
 const MAX_BILL_FILE_BYTES = 10 * 1024 * 1024;

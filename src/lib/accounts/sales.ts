@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase/client";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { Sale, SaleInput } from "@/lib/accounts/types";
 
 const salesCol = collection(db, "sales");
@@ -40,8 +41,17 @@ export async function updateSale(id: string, input: SaleInput) {
   await updateDoc(doc(db, "sales", id), { ...input });
 }
 
-export async function deleteSale(id: string) {
+export async function deleteSale(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "sales", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "sales", id));
+  await logDeletion({
+    collectionName: "sales",
+    recordId: id,
+    summary: data ? `Invoice ${data.invoiceNumber} — ${data.customerName} — ₹${data.grandTotal}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;

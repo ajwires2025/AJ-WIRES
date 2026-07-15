@@ -653,6 +653,19 @@ export type StatutoryPayment = {
 
 export type StatutoryPaymentInput = Omit<StatutoryPayment, "id" | "createdBy" | "createdAt">;
 
+// Every record deletion across the app is logged here — deletions are the
+// one action with zero trace otherwise (every doc already carries
+// createdBy/createdAt, but nothing records who removed it or what it was).
+export type DeletionLogEntry = {
+  id: string;
+  collectionName: string;
+  recordId: string;
+  summary: string;
+  deletedBy: string;
+  deletedByName: string;
+  deletedAt: string;
+};
+
 export type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 
 export type AgingRow = {

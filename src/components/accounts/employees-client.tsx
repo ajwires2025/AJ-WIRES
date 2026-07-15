@@ -43,7 +43,7 @@ export function EmployeesClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (employee: Employee) => {
     try {
-      await deleteEmployee(employee.id);
+      await deleteEmployee(employee.id, user.uid, user.name);
       toast.success("Employee deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

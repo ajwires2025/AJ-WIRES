@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/accounts/confirm-delete-dialog";
 import { subscribeToProductionVouchers, deleteProductionVoucher } from "@/lib/accounts/production";
 import { UNIT_LABELS, type ProductionVoucher } from "@/lib/accounts/types";
+import type { SessionUser } from "@/lib/firebase/session";
 
 const num = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
-export function ProductionVouchersClient() {
+export function ProductionVouchersClient({ user }: { user: SessionUser }) {
   const [vouchers, setVouchers] = React.useState<ProductionVoucher[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [deleting, setDeleting] = React.useState<ProductionVoucher | null>(null);
@@ -27,7 +28,7 @@ export function ProductionVouchersClient() {
 
   const handleDelete = async (voucher: ProductionVoucher) => {
     try {
-      await deleteProductionVoucher(voucher.id);
+      await deleteProductionVoucher(voucher.id, user.uid, user.name);
       toast.success("Production entry deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

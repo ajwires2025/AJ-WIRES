@@ -1,5 +1,6 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { JournalVoucher, JournalVoucherInput } from "@/lib/accounts/types";
 
 const journalCol = collection(db, "journalVouchers");
@@ -22,6 +23,15 @@ export async function createJournalVoucher(input: JournalVoucherInput, createdBy
   });
 }
 
-export async function deleteJournalVoucher(id: string) {
+export async function deleteJournalVoucher(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "journalVouchers", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "journalVouchers", id));
+  await logDeletion({
+    collectionName: "journalVouchers",
+    recordId: id,
+    summary: data ? `${data.narration} — ₹${data.totalDebit}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }

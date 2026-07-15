@@ -3,12 +3,14 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { Expense, ExpenseInput } from "@/lib/accounts/types";
 
 const expensesCol = collection(db, "expenses");
@@ -33,6 +35,15 @@ export async function updateExpense(id: string, input: ExpenseInput) {
   await updateDoc(doc(db, "expenses", id), { ...input });
 }
 
-export async function deleteExpense(id: string) {
+export async function deleteExpense(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "expenses", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "expenses", id));
+  await logDeletion({
+    collectionName: "expenses",
+    recordId: id,
+    summary: data ? `${data.category} — ₹${data.grandTotal} (${data.date})` : id,
+    deletedBy,
+    deletedByName,
+  });
 }

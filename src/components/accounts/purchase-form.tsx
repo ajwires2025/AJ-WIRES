@@ -213,7 +213,7 @@ export function PurchaseForm({ purchase, user }: { purchase: Purchase | null; us
   const handleDelete = async () => {
     if (!purchase) return;
     try {
-      await deletePurchase(purchase.id);
+      await deletePurchase(purchase.id, user.uid, user.name);
       toast.success("Purchase deleted");
       router.push("/accounts/purchases");
       router.refresh();

@@ -75,7 +75,7 @@ export function GstSummaryClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (adjustment: GstAdjustment) => {
     try {
-      await deleteGstAdjustment(adjustment.id);
+      await deleteGstAdjustment(adjustment.id, user.uid, user.name);
       toast.success("Adjustment deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

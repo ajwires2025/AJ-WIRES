@@ -242,7 +242,7 @@ export function QuotationForm({ quotation, user }: { quotation: Quotation | null
   const handleDelete = async () => {
     if (!quotation) return;
     try {
-      await deleteQuotation(quotation.id);
+      await deleteQuotation(quotation.id, user.uid, user.name);
       toast.success("Quotation deleted");
       router.push("/accounts/quotations");
       router.refresh();

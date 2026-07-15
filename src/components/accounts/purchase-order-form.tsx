@@ -247,7 +247,7 @@ export function PurchaseOrderForm({ po, user }: { po: PurchaseOrder | null; user
   const handleDelete = async () => {
     if (!po) return;
     try {
-      await deletePurchaseOrder(po.id);
+      await deletePurchaseOrder(po.id, user.uid, user.name);
       toast.success("Purchase order deleted");
       router.push("/accounts/purchase-orders");
       router.refresh();

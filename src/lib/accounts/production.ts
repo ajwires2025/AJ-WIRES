@@ -1,5 +1,6 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { ProductionVoucher, ProductionVoucherInput } from "@/lib/accounts/types";
 
 const productionCol = collection(db, "productionVouchers");
@@ -15,6 +16,15 @@ export async function createProductionVoucher(input: ProductionVoucherInput, cre
   await addDoc(productionCol, { ...input, createdBy, createdAt: new Date().toISOString() });
 }
 
-export async function deleteProductionVoucher(id: string) {
+export async function deleteProductionVoucher(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "productionVouchers", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "productionVouchers", id));
+  await logDeletion({
+    collectionName: "productionVouchers",
+    recordId: id,
+    summary: data ? `Production of ${data.finishedItemName} — ${data.quantityProduced} ${data.unit}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }

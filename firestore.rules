@@ -124,6 +124,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Log of every record deletion anywhere in the app — append-only (never
+    // updated or deleted) so it stays a trustworthy audit trail even between
+    // the two staff accounts that both have full delete rights.
+    match /deletionLog/{entryId} {
+      allow read, create: if isStaff();
+      allow update, delete: if false;
+    }
+
     // App-wide settings (e.g. reminder due-soon-days threshold).
     match /settings/{settingId} {
       allow read, write: if isStaff();

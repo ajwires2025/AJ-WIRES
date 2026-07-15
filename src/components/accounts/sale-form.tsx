@@ -247,7 +247,7 @@ export function SaleForm({ sale, user }: { sale: Sale | null; user: SessionUser 
   const handleDelete = async () => {
     if (!sale) return;
     try {
-      await deleteSale(sale.id);
+      await deleteSale(sale.id, user.uid, user.name);
       toast.success("Invoice deleted");
       router.push("/accounts/sales");
       router.refresh();

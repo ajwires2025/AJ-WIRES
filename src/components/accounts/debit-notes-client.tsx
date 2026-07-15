@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/accounts/confirm-delete-dialog";
 import { subscribeToDebitNotes, deleteDebitNote } from "@/lib/accounts/debit-notes";
 import type { DebitNote } from "@/lib/accounts/types";
+import type { SessionUser } from "@/lib/firebase/session";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
-export function DebitNotesClient() {
+export function DebitNotesClient({ user }: { user: SessionUser }) {
   const [notes, setNotes] = React.useState<DebitNote[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [deleting, setDeleting] = React.useState<DebitNote | null>(null);
@@ -26,7 +27,7 @@ export function DebitNotesClient() {
 
   const handleDelete = async (note: DebitNote) => {
     try {
-      await deleteDebitNote(note.id);
+      await deleteDebitNote(note.id, user.uid, user.name);
       toast.success("Debit note deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

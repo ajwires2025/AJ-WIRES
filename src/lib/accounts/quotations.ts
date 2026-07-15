@@ -2,6 +2,7 @@ import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query,
 import { db } from "@/lib/firebase/client";
 import { getNextNumber } from "@/lib/accounts/invoice-number";
 import { createSale } from "@/lib/accounts/sales";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { Quotation, QuotationInput, SaleInput } from "@/lib/accounts/types";
 
 const quotationsCol = collection(db, "quotations");
@@ -35,8 +36,17 @@ export async function updateQuotation(id: string, input: QuotationInput) {
   await updateDoc(doc(db, "quotations", id), { ...input });
 }
 
-export async function deleteQuotation(id: string) {
+export async function deleteQuotation(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "quotations", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "quotations", id));
+  await logDeletion({
+    collectionName: "quotations",
+    recordId: id,
+    summary: data ? `Quotation ${data.quoteNumber} — ${data.customerName} — ₹${data.grandTotal}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }
 
 // Converts an accepted quotation into a real, numbered Sale invoice — a

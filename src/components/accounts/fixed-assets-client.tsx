@@ -61,7 +61,7 @@ export function FixedAssetsClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (asset: FixedAsset) => {
     try {
-      await deleteFixedAsset(asset.id);
+      await deleteFixedAsset(asset.id, user.uid, user.name);
       toast.success("Asset deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

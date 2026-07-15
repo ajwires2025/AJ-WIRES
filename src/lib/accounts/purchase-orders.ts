@@ -2,6 +2,7 @@ import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query,
 import { db } from "@/lib/firebase/client";
 import { getNextNumber } from "@/lib/accounts/invoice-number";
 import { createPurchase } from "@/lib/accounts/purchases";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { PurchaseOrder, PurchaseOrderInput, PurchaseInput } from "@/lib/accounts/types";
 
 const purchaseOrdersCol = collection(db, "purchaseOrders");
@@ -35,8 +36,17 @@ export async function updatePurchaseOrder(id: string, input: PurchaseOrderInput)
   await updateDoc(doc(db, "purchaseOrders", id), { ...input });
 }
 
-export async function deletePurchaseOrder(id: string) {
+export async function deletePurchaseOrder(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "purchaseOrders", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "purchaseOrders", id));
+  await logDeletion({
+    collectionName: "purchaseOrders",
+    recordId: id,
+    summary: data ? `PO ${data.poNumber} — ${data.supplierName} — ₹${data.grandTotal}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }
 
 // Converts a confirmed PO into a real Purchase bill once the supplier's

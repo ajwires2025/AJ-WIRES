@@ -114,6 +114,7 @@ export async function exportAllDataToExcel(): Promise<void> {
     employees,
     payslips,
     statutoryPayments,
+    deletionLog,
   ] = await Promise.all([
     fetchAll("parties"),
     fetchAll("items"),
@@ -134,6 +135,7 @@ export async function exportAllDataToExcel(): Promise<void> {
     fetchAll("employees"),
     fetchAll("payslips"),
     fetchAll("statutoryPayments"),
+    fetchAll("deletionLog"),
   ]);
 
   const purchasesFlat = purchases.map(({ items: _items, ...rest }) => rest);
@@ -171,6 +173,7 @@ export async function exportAllDataToExcel(): Promise<void> {
   addSheet("Employees", employees);
   addSheet("Payslips", payslips);
   addSheet("Statutory Payments", statutoryPayments);
+  addSheet("Deletion Log", deletionLog);
   addSheet("Reminders Log", remindersLog);
 
   const dateStamp = new Date().toISOString().slice(0, 10);

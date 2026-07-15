@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/accounts/confirm-delete-dialog";
 import { subscribeToCreditNotes, deleteCreditNote } from "@/lib/accounts/credit-notes";
 import type { CreditNote } from "@/lib/accounts/types";
+import type { SessionUser } from "@/lib/firebase/session";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
-export function CreditNotesClient() {
+export function CreditNotesClient({ user }: { user: SessionUser }) {
   const [notes, setNotes] = React.useState<CreditNote[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [deleting, setDeleting] = React.useState<CreditNote | null>(null);
@@ -26,7 +27,7 @@ export function CreditNotesClient() {
 
   const handleDelete = async (note: CreditNote) => {
     try {
-      await deleteCreditNote(note.id);
+      await deleteCreditNote(note.id, user.uid, user.name);
       toast.success("Credit note deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

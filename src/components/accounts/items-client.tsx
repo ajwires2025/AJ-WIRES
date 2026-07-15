@@ -51,7 +51,7 @@ export function ItemsClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (item: Item) => {
     try {
-      await deleteItem(item.id);
+      await deleteItem(item.id, user.uid, user.name);
       toast.success("Item deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

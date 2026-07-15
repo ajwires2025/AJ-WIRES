@@ -72,7 +72,7 @@ export function PayrollClient({ user }: { user: SessionUser }) {
 
   const handleDeletePayslip = async (payslip: Payslip) => {
     try {
-      await deletePayslip(payslip.id);
+      await deletePayslip(payslip.id, user.uid, user.name);
       toast.success("Payslip deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");
@@ -81,7 +81,7 @@ export function PayrollClient({ user }: { user: SessionUser }) {
 
   const handleDeleteStatutory = async (payment: StatutoryPayment) => {
     try {
-      await deleteStatutoryPayment(payment.id);
+      await deleteStatutoryPayment(payment.id, user.uid, user.name);
       toast.success("Payment deleted");
     } catch {
       toast.error("Couldn't delete. Try again.");

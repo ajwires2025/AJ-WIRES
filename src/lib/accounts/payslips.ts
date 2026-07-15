@@ -1,7 +1,8 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { calcPayslipAmounts } from "@/lib/accounts/payroll";
 import { derivePaymentStatus } from "@/lib/accounts/gst-calc";
+import { logDeletion } from "@/lib/accounts/deletion-log";
 import type { Employee, Payslip, PayslipInput } from "@/lib/accounts/types";
 
 const payslipsCol = collection(db, "payslips");
@@ -26,8 +27,17 @@ export async function updatePayslip(id: string, input: PayslipInput) {
   await updateDoc(doc(db, "payslips", id), { ...input });
 }
 
-export async function deletePayslip(id: string) {
+export async function deletePayslip(id: string, deletedBy: string, deletedByName: string) {
+  const snap = await getDoc(doc(db, "payslips", id));
+  const data = snap.data();
   await deleteDoc(doc(db, "payslips", id));
+  await logDeletion({
+    collectionName: "payslips",
+    recordId: id,
+    summary: data ? `Payslip ${data.month} — ${data.employeeName} — ₹${data.netSalary}` : id,
+    deletedBy,
+    deletedByName,
+  });
 }
 
 // Creates one payslip per active employee for the given month, from their

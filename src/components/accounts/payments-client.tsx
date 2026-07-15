@@ -62,7 +62,7 @@ export function PaymentsClient({ user }: { user: SessionUser }) {
 
   const handleDelete = async (payment: Payment) => {
     try {
-      await deletePayment(payment);
+      await deletePayment(payment, user.uid, user.name);
       toast.success("Payment deleted and bill balance reversed");
     } catch {
       toast.error("Couldn't delete. Try again.");
