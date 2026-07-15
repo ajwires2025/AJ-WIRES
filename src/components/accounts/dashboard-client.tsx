@@ -212,8 +212,8 @@ export function DashboardClient({ userName }: { userName: string }) {
           tone={summary.netGst >= 0 ? "bad" : "good"}
           href="/accounts/gst-summary"
         />
-        <Tile label="Cash Received" value={inr.format(summary.cashReceived)} icon={<ArrowDownRight className="size-5" />} tone="good" href="/accounts/payments?direction=received" />
-        <Tile label="Cash Paid" value={inr.format(summary.cashPaid)} icon={<ArrowUpRight className="size-5" />} tone="bad" href="/accounts/payments?direction=paid" />
+        <Tile label="Money Received (all methods)" value={inr.format(summary.cashReceived)} icon={<ArrowDownRight className="size-5" />} tone="good" href="/accounts/payments?direction=received" />
+        <Tile label="Money Paid (all methods)" value={inr.format(summary.cashPaid)} icon={<ArrowUpRight className="size-5" />} tone="bad" href="/accounts/payments?direction=paid" />
         <Tile label="Total Receivables" value={inr.format(summary.totalReceivables)} icon={<TrendingUp className="size-5" />} href="/accounts/aging" />
         <Tile label="Total Payables" value={inr.format(summary.totalPayables)} icon={<TrendingDown className="size-5" />} href="/accounts/aging" />
       </div>
