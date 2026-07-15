@@ -17,7 +17,7 @@ import {
 import { PaymentFormDialog } from "@/components/accounts/payment-form-dialog";
 import { ConfirmDeleteDialog } from "@/components/accounts/confirm-delete-dialog";
 import { subscribeToPayments, deletePayment } from "@/lib/accounts/payments";
-import { PAYMENT_METHOD_LABELS, type Payment, type PaymentDirection } from "@/lib/accounts/types";
+import { PAYMENT_METHOD_LABELS, type Payment, type PaymentDirection, type PaymentMethod } from "@/lib/accounts/types";
 import type { SessionUser } from "@/lib/firebase/session";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
@@ -31,6 +31,7 @@ export function PaymentsClient({ user }: { user: SessionUser }) {
   const [directionFilter, setDirectionFilter] = React.useState<"all" | PaymentDirection>(
     initialDirection === "received" || initialDirection === "paid" ? initialDirection : "all"
   );
+  const [methodFilter, setMethodFilter] = React.useState<"all" | PaymentMethod>("all");
   const [formOpen, setFormOpen] = React.useState(false);
   const [deletingPayment, setDeletingPayment] = React.useState<Payment | null>(null);
 
@@ -44,14 +45,20 @@ export function PaymentsClient({ user }: { user: SessionUser }) {
 
   const filtered = payments.filter((p) => {
     const matchesDirection = directionFilter === "all" || p.direction === directionFilter;
+    const matchesMethod = methodFilter === "all" || p.method === methodFilter;
     const q = search.trim().toLowerCase();
     const matchesSearch =
       !q || p.partyName.toLowerCase().includes(q) || p.linkedNumber.toLowerCase().includes(q) || p.reference.toLowerCase().includes(q);
-    return matchesDirection && matchesSearch;
+    return matchesDirection && matchesMethod && matchesSearch;
   });
 
   const totalReceived = filtered.filter((p) => p.direction === "received").reduce((s, p) => s + p.amount, 0);
   const totalPaid = filtered.filter((p) => p.direction === "paid").reduce((s, p) => s + p.amount, 0);
+
+  const methodCounts = (Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).map((method) => ({
+    method,
+    count: payments.filter((p) => p.method === method).length,
+  }));
 
   const handleDelete = async (payment: Payment) => {
     try {
@@ -71,6 +78,9 @@ export function PaymentsClient({ user }: { user: SessionUser }) {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Received: {inr.format(totalReceived)} · Paid: {inr.format(totalPaid)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            By method (all payments): {methodCounts.map((m) => `${PAYMENT_METHOD_LABELS[m.method]} (${m.count})`).join(" · ")}
           </p>
         </div>
         <Button onClick={() => setFormOpen(true)} className="bg-navy text-white hover:bg-navy-light dark:bg-gold dark:text-navy">
@@ -94,6 +104,15 @@ export function PaymentsClient({ user }: { user: SessionUser }) {
             <SelectItem value="all">All payments</SelectItem>
             <SelectItem value="received">Received (from customers)</SelectItem>
             <SelectItem value="paid">Paid (to suppliers)</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={methodFilter} onValueChange={(v) => setMethodFilter(v as "all" | PaymentMethod)}>
+          <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All methods</SelectItem>
+            {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

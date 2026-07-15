@@ -16,7 +16,7 @@ import {
 import { ExpenseFormDialog } from "@/components/accounts/expense-form-dialog";
 import { ConfirmDeleteDialog } from "@/components/accounts/confirm-delete-dialog";
 import { subscribeToExpenses, deleteExpense } from "@/lib/accounts/expenses";
-import { PAYMENT_METHOD_LABELS, type Expense, type ExpenseDirection } from "@/lib/accounts/types";
+import { PAYMENT_METHOD_LABELS, type Expense, type ExpenseDirection, type PaymentMethod } from "@/lib/accounts/types";
 import type { SessionUser } from "@/lib/firebase/session";
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
@@ -26,6 +26,7 @@ export function ExpensesClient({ user }: { user: SessionUser }) {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [directionFilter, setDirectionFilter] = React.useState<"all" | ExpenseDirection>("all");
+  const [methodFilter, setMethodFilter] = React.useState<"all" | PaymentMethod>("all");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = React.useState<Expense | null>(null);
@@ -40,17 +41,23 @@ export function ExpensesClient({ user }: { user: SessionUser }) {
 
   const filtered = expenses.filter((e) => {
     const matchesDirection = directionFilter === "all" || e.direction === directionFilter;
+    const matchesMethod = methodFilter === "all" || e.method === methodFilter;
     const q = search.trim().toLowerCase();
     const matchesSearch =
       !q ||
       e.category.toLowerCase().includes(q) ||
       e.description.toLowerCase().includes(q) ||
       e.partyName.toLowerCase().includes(q);
-    return matchesDirection && matchesSearch;
+    return matchesDirection && matchesMethod && matchesSearch;
   });
 
   const totalExpense = filtered.filter((e) => e.direction === "expense").reduce((s, e) => s + e.grandTotal, 0);
   const totalIncome = filtered.filter((e) => e.direction === "income").reduce((s, e) => s + e.grandTotal, 0);
+
+  const methodCounts = (Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).map((method) => ({
+    method,
+    count: expenses.filter((e) => e.method === method).length,
+  }));
 
   const handleDelete = async (expense: Expense) => {
     try {
@@ -70,6 +77,9 @@ export function ExpensesClient({ user }: { user: SessionUser }) {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Expenses: {inr.format(totalExpense)} · Other income: {inr.format(totalIncome)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            By method (all entries): {methodCounts.map((m) => `${PAYMENT_METHOD_LABELS[m.method]} (${m.count})`).join(" · ")}
           </p>
         </div>
         <Button
@@ -99,6 +109,15 @@ export function ExpensesClient({ user }: { user: SessionUser }) {
             <SelectItem value="all">All entries</SelectItem>
             <SelectItem value="expense">Expenses</SelectItem>
             <SelectItem value="income">Other Income</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={methodFilter} onValueChange={(v) => setMethodFilter(v as "all" | PaymentMethod)}>
+          <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All methods</SelectItem>
+            {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
