@@ -123,7 +123,7 @@ export function AccountsShell({
 
   const linkClass = (active: boolean) =>
     cn(
-      "shrink-0 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors hover:bg-white/10 hover:text-white",
+      "shrink-0 rounded-md px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:bg-white/10 hover:text-white",
       active
         ? "bg-white/15 text-white font-semibold shadow-[inset_0_-2px_0_0_var(--gold,#eda100)]"
         : "text-white/80"
@@ -142,7 +142,7 @@ export function AccountsShell({
   }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className={cn(linkClass(active), "flex items-center gap-1.5")}>
+        <button className={cn(linkClass(active), "flex items-center gap-1")}>
           <Icon className="size-4" /> {label} <ChevronDown className="size-3.5" />
         </button>
       </DropdownMenuTrigger>
@@ -161,13 +161,13 @@ export function AccountsShell({
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b border-border bg-navy print:hidden">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3.5 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
           <div className="flex shrink-0 items-center gap-2 text-white">
             <ShieldCheck className="size-5 shrink-0 text-gold" />
             <span className="hidden font-heading text-sm font-semibold whitespace-nowrap sm:inline">A.J. Wires Accounts</span>
           </div>
 
-          <nav className="hidden min-w-0 flex-1 items-center gap-2 xl:flex">
+          <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto xl:flex [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {primaryNavItems.map((item) => (
               <Link key={item.href} href={item.href} className={linkClass(pathname === item.href)}>
                 {item.label}
